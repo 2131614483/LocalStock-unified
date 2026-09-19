@@ -120,6 +120,8 @@ powershell -ExecutionPolicy Bypass -File .\tools\start-desktop.ps1
 | `tools`                      | 统一环境、启动和验证脚本                  |
 
 旧目录保持不动，不再作为后续开发入口。
+SPDX-License-Identifier: Apache-2.0
+
 ## 第三方依赖声明
 本项目引用 jqdatasdk（聚宽JQData Python SDK）
 
