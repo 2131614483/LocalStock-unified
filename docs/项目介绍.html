@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LocalStock Unified 项目介绍</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230D1326'/%3E%3Cpath d='M8 22 L14 14 L18 18 L24 10' stroke='%232563EB' stroke-width='2.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="https://miaoda.feishu.cn/fonts/css2?family=Noto+Sans+SC:wght@400;500;700;900&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --bg:#F2F4F8;
+  --surface:#FFFFFF;
+  --ink:#0D1326;
+  --ink-2:#354052;
+  --muted:#536174;
+  --faint:#8A94A6;
+  --line:#DDE2EC;
+  --accent:#2563EB;
+  --accent-soft:#BF D7FF;
+  --dark:#0D1326;
+  --up:#F5222D;
+  --down:#14B143;
+  --mono:'JetBrains Mono',ui-monospace,monospace;
+  --sans:'Noto Sans SC',system-ui,-apple-system,sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:var(--sans);background:var(--bg);color:var(--ink);line-height:1.65;font-size:15px}
+a{color:var(--accent);text-decoration:none}
+code,pre{font-family:var(--mono)}
+
+/* layout */
+.wrap{max-width:1080px;margin:0 auto;padding:0 32px}
+nav.toc{position:fixed;left:0;top:0;bottom:0;width:240px;padding:32px 24px;border-right:1px solid var(--line);background:var(--surface);overflow-y:auto;display:none}
+@media(min-width:1200px){nav.toc{display:block}}
+nav.toc .brand{font-weight:900;font-size:15px;color:var(--ink);margin-bottom:24px;letter-spacing:.5px}
+nav.toc a{display:block;padding:6px 0;color:var(--muted);font-size:13px;border-left:2px solid transparent;padding-left:12px;margin-left:-12px}
+nav.toc a:hover{color:var(--accent);border-left-color:var(--accent)}
+main{margin-left:0}
+@media(min-width:1200px){main{margin-left:240px}}
+
+/* hero */
+.hero{background:var(--dark);color:#fff;padding:96px 0 72px}
+.hero .eyebrow{font-size:12px;letter-spacing:3px;color:#78A0FF;margin-bottom:20px;font-family:var(--mono)}
+.hero h1{font-size:56px;font-weight:900;line-height:1.1;letter-spacing:-1px;margin-bottom:20px}
+.hero .sub{font-size:20px;color:#BFD7FF;max-width:680px;line-height:1.5}
+.hero .meta{margin-top:40px;display:flex;gap:24px;flex-wrap:wrap;font-size:13px;color:#B8BCC2}
+.hero .meta span{display:flex;align-items:center;gap:8px}
+.hero .meta .dot{width:6px;height:6px;border-radius:50%;background:var(--accent)}
+
+/* sections */
+section{padding:72px 0;border-bottom:1px solid var(--line)}
+section:last-of-type{border-bottom:none}
+.sec-num{font-family:var(--mono);font-size:12px;color:var(--accent);letter-spacing:2px;margin-bottom:8px}
+h2{font-size:32px;font-weight:900;letter-spacing:-.5px;margin-bottom:12px;color:var(--ink)}
+.lead{font-size:16px;color:var(--muted);max-width:720px;margin-bottom:36px}
+h3{font-size:18px;font-weight:700;margin:28px 0 12px;color:var(--ink)}
+
+/* positioning list */
+.pos-list{display:grid;grid-template-columns:1fr;gap:0}
+.pos-item{display:grid;grid-template-columns:48px 1fr;gap:20px;padding:20px 0;border-top:1px solid var(--line)}
+.pos-item:first-child{border-top:none}
+.pos-item .n{font-family:var(--mono);font-size:24px;font-weight:500;color:var(--accent)}
+.pos-item h4{font-size:16px;font-weight:700;margin-bottom:4px}
+.pos-item p{font-size:14px;color:var(--muted)}
+
+/* architecture diagram */
+.arch{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:40px;margin:24px 0}
+.arch-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;position:relative}
+.node{border:1.5px solid var(--accent);border-radius:6px;padding:16px 18px;background:#fff}
+.node.dark{background:var(--dark);border-color:var(--dark);color:#fff}
+.node.dashed{border-style:dashed;background:transparent}
+.node .t{font-weight:700;font-size:14px;margin-bottom:4px}
+.node .d{font-size:12px;color:var(--muted);line-height:1.5}
+.node.dark .d{color:#BFD7FF}
+.node small{display:block;font-family:var(--mono);font-size:11px;color:var(--faint);margin-top:6px}
+.arch-center{grid-column:1/-1;text-align:center}
+.arch-center .node{display:inline-block;min-width:420px}
+.arrow-row{display:flex;align-items:center;justify-content:center;gap:12px;margin:16px 0;color:var(--muted);font-size:12px;font-family:var(--mono)}
+.arrow-row::before,.arrow-row::after{content:"";flex:1;height:1px;background:var(--line);max-width:120px}
+
+/* two col */
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-top:24px}
+@media(max-width:720px){.cols{grid-template-columns:1fr}.arch-grid{grid-template-columns:1fr}}
+@media(max-width:640px){
+  .wrap{padding:0 16px}
+  .hero{padding:64px 0 48px}
+  .hero h1{font-size:38px}
+  .hero .sub{font-size:16px}
+  h2{font-size:24px}
+  table{display:block;overflow-x:auto;white-space:nowrap;-webkit-overflow-scrolling:touch}
+  pre{font-size:12px;padding:16px}
+}
+
+/* feature list */
+.feat{margin-top:8px}
+.feat li{list-style:none;padding:10px 0 10px 20px;border-bottom:1px solid var(--line);position:relative;font-size:14px;color:var(--ink-2)}
+.feat li::before{content:"";position:absolute;left:0;top:18px;width:8px;height:2px;background:var(--accent)}
+.feat li:last-child{border-bottom:none}
+
+/* table */
+table{width:100%;border-collapse:collapse;margin:20px 0;font-size:13px}
+th{background:var(--dark);color:#fff;text-align:left;padding:10px 12px;font-weight:500}
+td{padding:10px 12px;border-bottom:1px solid var(--line);color:var(--ink-2);vertical-align:top}
+tr:last-child td{border-bottom:none}
+td:first-child{font-weight:500;color:var(--ink);white-space:nowrap}
+code{background:#E8EDF7;padding:1px 6px;border-radius:3px;font-size:12px;color:var(--accent)}
+
+/* code block */
+pre{background:var(--dark);color:#BFD7FF;padding:20px 24px;border-radius:6px;overflow-x:auto;font-size:13px;line-height:1.7;margin:16px 0}
+pre .c{color:#6B7280}
+
+/* constraint grid */
+.cons{display:grid;grid-template-columns:1fr 1fr;gap:0 40px}
+@media(max-width:720px){.cons{grid-template-columns:1fr}}
+.cons .item{padding:14px 0;border-bottom:1px solid var(--line)}
+.cons .item .h{font-weight:700;font-size:14px;margin-bottom:2px}
+.cons .item .h span{font-family:var(--mono);color:var(--accent);margin-right:8px}
+.cons .item p{font-size:12px;color:var(--muted)}
+
+/* screenshots */
+.shot-grid{display:grid;grid-template-columns:1fr;gap:20px;margin:16px 0 32px}
+.shot-grid.two{grid-template-columns:1fr 1fr}
+.shot-grid.three{grid-template-columns:1fr 1fr 1fr}
+@media(max-width:900px){.shot-grid.three{grid-template-columns:1fr}}
+@media(max-width:720px){.shot-grid.two{grid-template-columns:1fr}}
+.shot-grid figure{margin:0}
+.shot-grid img{width:100%;border:1px solid var(--line);border-radius:6px;display:block}
+.shot-grid figcaption{font-size:12px;color:var(--faint);margin-top:6px;text-align:center}
+
+/* footer */
+footer{padding:48px 0;text-align:center;color:var(--faint);font-size:13px}
+</style>
+</head>
+<body>
+
+<nav class="toc">
+  <div class="brand">LocalStock Unified</div>
+  <a href="#pos">项目定位</a>
+  <a href="#arch">整体架构</a>
+  <a href="#desktop">桌面端</a>
+  <a href="#jq">聚宽服务</a>
+  <a href="#pa">价格行为 AI</a>
+  <a href="#data">数据层</a>
+  <a href="#quote">行情获取</a>
+  <a href="#feat">核心功能</a>
+  <a href="#real">真实界面</a>
+  <a href="#start">快速启动</a>
+  <a href="#rule">设计约束</a>
+  <a href="#stack">技术栈</a>
+</nav>
+
+<main>
+
+<!-- HERO -->
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow">LOCALSTOCK UNIFIED · 本地量化工作台</div>
+    <h1>LocalStock<br>Unified</h1>
+    <p class="sub">本地 A 股行情 + 量化回测 + 价格行为 AI 一体化桌面工作台。免登录，全部数据落本地 SQLite。</p>
+    <div class="meta">
+      <span><i class="dot"></i>Electron 37 / React 19</span>
+      <span><i class="dot"></i>Node Express + Python 引擎</span>
+      <span><i class="dot"></i>v0.2.0 · AGPL-3.0</span>
+    </div>
+  </div>
+</header>
+
+<!-- 1 项目定位 -->
+<section id="pos">
+  <div class="wrap">
+    <div class="sec-num">01 / 项目定位</div>
+    <h2>三件原本分散的东西，收敛到同一个本地工作区</h2>
+    <p class="lead">把桌面行情软件、聚宽兼容回测服务、价格行为 AI 三件原本分散的产物，统一到 LocalStock-unified 这一个仓库里。</p>
+    <div class="pos-list">
+      <div class="pos-item"><div class="n">01</div><div><h4>桌面行情软件</h4><p>Electron + React 写的 Windows 桌面应用，同花顺深色风格，红涨绿跌，免登录。</p></div></div>
+      <div class="pos-item"><div class="n">02</div><div><h4>聚宽兼容的本地研究 / 回测服务</h4><p>Node Express + Python 引擎，聚宽风格策略 API，浏览器里用，约 20 个因子双轨校验。</p></div></div>
+      <div class="pos-item"><div class="n">03</div><div><h4>价格行为 AI 服务</h4><p>Al Brooks 价格行为体系，随桌面端自动启停，自带 venv，可拷到没装 Python 的电脑运行。</p></div></div>
+      <div class="pos-item"><div class="n">04</div><div><h4>唯一权威行情库</h4><p><code>data/market/stock_data.db</code> 一个 SQLite 文件，约 1850 万行日线，三个组件共同只读它。</p></div></div>
+      <div class="pos-item"><div class="n">05</div><div><h4>不连云端、不强制登录</h4><p>实时行情走东财 / 腾讯 / 新浪多源回退拉取，配置与分析结果全部写在本机。</p></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- 2 整体架构 -->
+<section id="arch">
+  <div class="wrap">
+    <div class="sec-num">02 / 整体架构</div>
+    <h2>三个组件围绕一个行情库，桌面端是唯一入口</h2>
+    <p class="lead">桌面端是主入口，通过量化网关调用聚宽服务；桌面端自动拉起 pa-agent；后两者只读行情库。</p>
+    <div class="arch">
+      <div class="arch-grid">
+        <div class="node">
+          <div class="t">apps/desktop</div>
+          <div class="d">Electron 37 + React 19 · 主入口<br>行情 / K线 / 回测 / AI / 选股 / 监盘</div>
+          <small>apps/desktop</small>
+        </div>
+        <div class="node">
+          <div class="t">services/joinquant-local</div>
+          <div class="d">Node Express + Python 引擎 · :3000<br>聚宽策略 API · 多因子研究与生产回测</div>
+          <small>services/joinquant-local</small>
+        </div>
+        <div class="node dashed">
+          <div class="t">python/pa-agent</div>
+          <div class="d">价格行为 AI · SSE 流式<br>桌面端自动拉起 / 关闭</div>
+          <small>apps/desktop/python/pa-agent</small>
+        </div>
+        <div class="node dark">
+          <div class="t" style="color:#fff">data/market/stock_data.db</div>
+          <div class="d">唯一权威行情库 · SQLite<br>约 1850 万行日线 · 三组件共同只读</div>
+        </div>
+      </div>
+      <div class="arrow-row">桌面端 ↔ 聚宽服务（量化网关 :3000）　·　桌面端 → pa-agent（自动启停）　·　两者 → 行情库（只读）</div>
+    </div>
+  </div>
+</section>
+
+<!-- 3 桌面端 -->
+<section id="desktop">
+  <div class="wrap">
+    <div class="sec-num">03 / 组件 A</div>
+    <h2>桌面端：同花顺风格 A 股行情软件，也是唯一入口</h2>
+    <div class="cols">
+      <div>
+        <h3>技术栈</h3>
+        <ul class="feat">
+          <li>壳：Electron 37 + electron-vite 3</li>
+          <li>渲染：React 19 + Zustand 5 + ECharts 5</li>
+          <li>存储：better-sqlite3（主进程单客户端）</li>
+          <li>编辑：CodeMirror（策略代码）</li>
+          <li>打包：electron-builder · Windows portable</li>
+          <li>子进程：Python 3.9+（akshare / pandas）</li>
+        </ul>
+      </div>
+      <div>
+        <h3>进程结构（electron-vite 三段式）</h3>
+        <table>
+          <tr><th>进程</th><th>目录</th><th>职责</th></tr>
+          <tr><td>主进程</td><td><code>electron/</code></td><td>建窗口、SQLite、IPC、行情轮询、拉起 Python</td></tr>
+          <tr><td>预加载</td><td><code>preload.ts</code></td><td>contextBridge 暴露 window.api</td></tr>
+          <tr><td>渲染层</td><td><code>src/</code></td><td>React UI，5 个 Zustand store</td></tr>
+        </table>
+        <p style="font-size:13px;color:var(--muted);margin-top:12px">IPC 契约唯一真相源：<code>shared/types.ts</code>。新增 IPC 必须同步改三处。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 4 聚宽服务 -->
+<section id="jq">
+  <div class="wrap">
+    <div class="sec-num">04 / 组件 B</div>
+    <h2>聚宽兼容服务：浏览器里的本地研究 / 回测平台</h2>
+    <h3>回测链路</h3>
+    <pre><span class="c"># 浏览器 → 回测引擎 → 落库 → 刷新</span>
+浏览器 main.js
+  → POST /api/backtest/:id/run
+  → Express 起 Python 子进程（backtest_engine.py）
+  → 读 stock_data.db 执行策略
+  → stdout 输出纯 JSON（120s 超时 / 50MB 缓冲）
+  → 写入 backtest.db
+  → 前端刷新图表</pre>
+    <p style="font-size:13px;color:#C0392B;margin:8px 0 24px"><strong>硬约束：</strong>引擎 stdout 必须是纯 JSON，策略代码禁止 <code>print()</code>，一律用 <code>log()</code>。</p>
+    <h3>多因子双轨</h3>
+    <div class="cols">
+      <div>
+        <ul class="feat">
+          <li><strong>研究轨</strong>　scripts/ · pandas · Python 3.11</li>
+          <li>因子发现、IC / 分层、组合迭代</li>
+          <li><strong>生产轨</strong>　engine/factor_calc_stdlib.py</li>
+          <li>纯标准库，网页复现同样因子值</li>
+        </ul>
+      </div>
+      <div>
+        <ul class="feat">
+          <li>两轨共用 <code>factor_registry.json</code> 定义</li>
+          <li>一致性脚本校验偏差 ≤ 0.001</li>
+          <li>约 20 个因子：动量 / 反转 / 波动 / 价值 / 质量</li>
+          <li>无未来函数三铁律：报告期 +4 月、skip 近 20 日、剔除 ST/涨跌停</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 5 价格行为 AI -->
+<section id="pa">
+  <div class="wrap">
+    <div class="sec-num">05 / 组件 C</div>
+    <h2>价格行为 AI：Al Brooks 体系，随桌面端自动启停</h2>
+    <div class="cols">
+      <div>
+        <h3>关键事实</h3>
+        <ul class="feat">
+          <li>移植自 PA_Agent_616，界面用 React 重写</li>
+          <li>对行情库<strong>只读</strong>，无写权限</li>
+          <li>桌面端启动时拉起、退出时关闭</li>
+          <li>端口 0 由系统分配，经端口文件回报</li>
+          <li>大模型配置由桌面端按请求传入，服务端不存密钥</li>
+          <li>SSE 流式：两阶段推理 token 逐字推送</li>
+          <li>周期仅 1d / 1w / 1M</li>
+        </ul>
+      </div>
+      <div>
+        <h3>运行环境自给（拷到没 Python 的电脑也能跑）</h3>
+        <table>
+          <tr><th>优先级</th><th>策略</th></tr>
+          <tr><td>① 优先</td><td>自带 venv（userData/pa-agent-venv）</td></tr>
+          <tr><td>② 否则</td><td>找本机 Python 建 venv（pip 清华源）</td></tr>
+          <tr><td>③ 都没有</td><td>下载独立 CPython（约 21MB）</td></tr>
+        </table>
+        <p style="font-size:12px;color:var(--muted);margin-top:12px">独立 CPython 走 ghproxy 代理优先；解压必须用 System32\tar.exe（Git GNU tar 会把 C:\ 当主机名）。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 6 数据层 -->
+<section id="data">
+  <div class="wrap">
+    <div class="sec-num">06 / 数据层</div>
+    <h2>三个 SQLite 文件：一个权威行情库 + 两个业务库</h2>
+    <table>
+      <tr><th>库</th><th>位置</th><th>客户端</th><th>内容</th></tr>
+      <tr><td>行情库（权威）</td><td><code>data/market/stock_data.db</code></td><td>三组件共享</td><td>stocks、stock_daily（约 1850 万行 bfq）、trade_calendar、index_daily、分时、分钟 K</td></tr>
+      <tr><td>桌面业务库</td><td><code>userData/localstock.db</code></td><td>仅桌面主进程</td><td>自选、设置、K 线缓存、画线与历史、预警、AI 审计、选股、监盘</td></tr>
+      <tr><td>聚宽业务库</td><td><code>backtest.db</code></td><td>仅聚宽服务</td><td>用户、策略代码、回测记录、逐日净值、成交、持仓</td></tr>
+    </table>
+    <h3>行情库路径解析优先级</h3>
+    <p style="font-size:14px;color:var(--ink-2)">设置 <code>marketDbPath</code>（界面显式选定） → 环境变量 <code>LOCALSTOCK_MARKET_DB</code> → 便携包同目录 data/ → exe 同目录 data/ → userData/stock_data.db。切换后立即生效，不用重启应用。</p>
+  </div>
+</section>
+
+<!-- 7 行情获取 -->
+<section id="quote">
+  <div class="wrap">
+    <div class="sec-num">07 / 行情获取</div>
+    <h2>实时行情：本地优先 + 东财 / 腾讯 / 新浪多源回退</h2>
+    <table>
+      <tr><th>数据</th><th>优先级链（从左到右依次回退）</th></tr>
+      <tr><td>实时快照</td><td>东财 push2 → 腾讯 qt.gtimg.cn（GBK，60s 冷却）</td></tr>
+      <tr><td>日 / 周 / 月 / 季 K</td><td>本地 stock_daily → kline_cache（TTL） → 东财 push2his</td></tr>
+      <tr><td>分钟 K（1/5/15/30/60/120）</td><td>新浪 getKLineData → 腾讯 mkline（120 由 60 两两聚合）</td></tr>
+      <tr><td>分时</td><td>60s 缓存 → 本地 stock_minute → 新浪 scale=1 → 东财 trends2</td></tr>
+      <tr><td>盘口五档</td><td>仅腾讯（GBK，iconv-lite 解码）</td></tr>
+      <tr><td>搜索</td><td>东财 searchapi（过滤 AStock）</td></tr>
+    </table>
+    <p style="font-size:13px;color:var(--muted)">所有出站请求过全局串行 Limiter（250ms 最小间隔，队列超 200 丢最旧）；东财分钟 / 季 K 不可靠，分钟走新浪 / 腾讯，季 K 走本地日线聚合。</p>
+  </div>
+</section>
+
+<!-- 8 核心功能 -->
+<section id="feat">
+  <div class="wrap">
+    <div class="sec-num">08 / 桌面端功能</div>
+    <h2>12 个模块：从行情浏览到 AI 决策闭环</h2>
+    <div class="cols">
+      <div>
+        <h3>行情浏览</h3>
+        <ul class="feat">
+          <li>自选股 / 指数栏：行情快照按订阅广播</li>
+          <li>K 线图：蜡烛 + MA + 成交量，双 grid 联动</li>
+          <li>分时图：价格线 + 均价线 + 昨收 markLine</li>
+          <li>盘口五档 / 搜索（东财 searchapi）</li>
+        </ul>
+        <h3>画线与回测</h3>
+        <ul class="feat">
+          <li>K 线画线：手绘 + Python 算法 + 100 版历史</li>
+          <li>量化回测：模板 + CodeMirror 编辑策略</li>
+          <li>策略模板：买入持有 / 双均线 / 布林 / 海龟</li>
+        </ul>
+      </div>
+      <div>
+        <h3>AI 与决策</h3>
+        <ul class="feat">
+          <li>AI 助手：Agent 工具循环 + 写审计 + 一键回滚</li>
+          <li>自动选股：sqlite-worker 扫描，结果入库</li>
+          <li>实时监盘：行情入库 + AI 预测 + 命中率</li>
+          <li>分时 AI 画线：分时图标注与预测</li>
+        </ul>
+        <h3>价格行为 AI</h3>
+        <ul class="feat">
+          <li>侧边栏入口，两阶段推理</li>
+          <li>SSE 流式 token 逐字推送，不设总超时</li>
+          <li>周期 1d / 1w / 1M，60 或 100 根 K 线上下文</li>
+          <li>浮窗管理：多窗口视图切换</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 9 真实界面 -->
+<section id="real">
+  <div class="wrap">
+    <div class="sec-num">09 / 真实界面</div>
+    <h2>真实运行截图：每个功能都跑过</h2>
+    <p class="lead">以下截图来自打包后的 LocalStock.exe 与聚宽服务 :3000，2026-09-18 实际运行。</p>
+
+    <h3>行情浏览：自选股 / 沪深 A 股 / 分时</h3>
+    <div class="shot-grid three">
+      <figure><img src="_shots/desktop-watchlist.png" alt="自选股"><figcaption>自选股：14 只，红涨绿跌实时刷新</figcaption></figure>
+      <figure><img src="_shots/desktop-market.png" alt="沪深A股"><figcaption>沪深 A 股：全市场 5973 只股票</figcaption></figure>
+      <figure><img src="_shots/desktop-minute.png" alt="分时"><figcaption>分时图：价格线 + 均价线 + 昨收</figcaption></figure>
+    </div>
+
+    <h3>K 线多周期：日 K / 周 K / 月 K</h3>
+    <div class="shot-grid three">
+      <figure><img src="_shots/desktop-dayk.png" alt="日K"><figcaption>日 K：蜡烛 + MA + 五档盘口 + 画线 + 新闻</figcaption></figure>
+      <figure><img src="_shots/desktop-weekk.png" alt="周K"><figcaption>周 K：本地日线聚合</figcaption></figure>
+      <figure><img src="_shots/desktop-monthk.png" alt="月K"><figcaption>月 K：长周期定位</figcaption></figure>
+    </div>
+
+    <h3>工具：回测 / 预警 / 画线</h3>
+    <div class="shot-grid three">
+      <figure><img src="_shots/desktop-backtest.png" alt="回测"><figcaption>回测：策略模板 + CodeMirror Python 编辑器</figcaption></figure>
+      <figure><img src="_shots/desktop-alert.png" alt="预警"><figcaption>预警：均线金叉死叉规则，立即扫描</figcaption></figure>
+      <figure><img src="_shots/desktop-drawing.png" alt="画线"><figcaption>画线：趋势线拖拽，自动保存</figcaption></figure>
+    </div>
+
+    <h3>AI：助手 / 价格行为 / 设置</h3>
+    <div class="shot-grid three">
+      <figure><img src="_shots/desktop-ai-page.png" alt="AI助手"><figcaption>AI 助手独立页：读行情/写策略/选股</figcaption></figure>
+      <figure><img src="_shots/desktop-pa.png" alt="价格行为AI"><figcaption>价格行为 AI：茅台日线 + EMA20 + 多阶段分析</figcaption></figure>
+      <figure><img src="_shots/desktop-settings.png" alt="设置"><figcaption>设置：行情刷新/快捷键/AI 后端配置</figcaption></figure>
+    </div>
+
+    <h3>聚宽服务网页：策略列表与回测详情</h3>
+    <div class="shot-grid two">
+      <figure><img src="_shots/jq-algorithms.png" alt="策略列表"><figcaption>策略列表：12 个因子策略，状态与最新收益</figcaption></figure>
+      <figure><img src="_shots/jq-home.png" alt="回测详情"><figcaption>海龟多因子回测：总收益 49.53% / 年化 23.20% / 夏普 0.65</figcaption></figure>
+    </div>
+
+  </div>
+</section>
+
+<!-- 10 快速启动 -->
+<section id="start">
+  <div class="wrap">
+    <div class="sec-num">10 / 快速启动</div>
+    <h2>三步启动：装依赖、验工作区、起全部服务</h2>
+    <p class="lead">环境要求：Windows · Node.js · Python 3.9+（akshare / pandas）· 数据同步脚本需系统 Python 3.11。</p>
+    <pre><span class="c"># 一键启动</span>
+cd D:\pythonpro\LocalStock-unified
+npm run install:all
+npm run verify:workspace
+powershell -ExecutionPolicy Bypass -File .\tools\start-all.ps1</pre>
+    <div class="cols">
+      <div>
+        <h3>分别启动</h3>
+        <ul class="feat">
+          <li><code>tools/start-quant.ps1</code>　只起聚宽服务</li>
+          <li><code>tools/start-desktop.ps1</code>　只起桌面端</li>
+        </ul>
+      </div>
+      <div>
+        <h3>常用命令（改完必跑）</h3>
+        <ul class="feat">
+          <li><code>npm run typecheck</code>　类型检查</li>
+          <li><code>npm test</code>　Vitest 单测</li>
+          <li><code>npm run build:win</code>　打 Windows portable 包</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 10 设计约束 -->
+<section id="rule">
+  <div class="wrap">
+    <div class="sec-num">11 / 设计约束</div>
+    <h2>十条硬约束：改代码前必须知道</h2>
+    <div class="cons">
+      <div class="item"><div class="h"><span>01</span>唯一权威行情库</div><p>不得在其他目录新建独立行情库副本。</p></div>
+      <div class="item"><div class="h"><span>02</span>pa-agent 只读</div><p>价格行为 AI 对行情库无写权限。</p></div>
+      <div class="item"><div class="h"><span>03</span>IPC 三处同步</div><p>types.ts / preload.ts / ipc.ts handler 必须同步改。</p></div>
+      <div class="item"><div class="h"><span>04</span>Python stdout 纯净</div><p>禁止 print()，日志一律 log() 或 stderr。</p></div>
+      <div class="item"><div class="h"><span>05</span>股票代码归一化</div><p>策略写 600519.XSHG，库内键是 6 位 600519。</p></div>
+      <div class="item"><div class="h"><span>06</span>幸存者偏差</div><p>行情源只有现存股票，长周期回测收益偏高。</p></div>
+      <div class="item"><div class="h"><span>07</span>UI 风格统一</div><p>深色主题，红涨绿跌，复用全局类，不写内联样式。</p></div>
+      <div class="item"><div class="h"><span>08</span>不提交</div><p>数据库、运行状态、密钥、缓存、node_modules、打包产物。</p></div>
+      <div class="item"><div class="h"><span>09</span>改完必跑</div><p>根目录 npm run typecheck 与 npm test。</p></div>
+      <div class="item"><div class="h"><span>10</span>不动旧目录</div><p>desktop/desktop 与 聚宽-local 是历史版本，只读保留。</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- 11 技术栈 -->
+<section id="stack">
+  <div class="wrap">
+    <div class="sec-num">12 / 技术栈一览</div>
+    <h2>一份本地自用的 A 股工作台</h2>
+    <table>
+      <tr><th>层</th><th>技术选型</th></tr>
+      <tr><td>桌面壳</td><td>Electron 37 · electron-vite 3 · electron-builder 26</td></tr>
+      <tr><td>桌面渲染</td><td>React 19 · Zustand 5 · ECharts 5 · CodeMirror</td></tr>
+      <tr><td>本地存储</td><td>better-sqlite3（主进程单客户端，同步 API）</td></tr>
+      <tr><td>研究服务</td><td>Node Express · 原生 Chart.js 前端 · 纯标准库 Python 引擎</td></tr>
+      <tr><td>因子研究</td><td>pandas（Python 3.11），与 stdlib 生产轨双轨校验</td></tr>
+      <tr><td>行情源</td><td>东财 push2 · 腾讯 qt.gtimg.cn · 新浪财经</td></tr>
+      <tr><td>AI 与测试</td><td>Python SSE 自带 venv · Vitest · Playwright 视觉测试</td></tr>
+    </table>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">LocalStock Unified v0.2.0 · AGPL-3.0 · 本地 A 股行情 + 量化回测 + 价格行为 AI</div>
+</footer>
+
+</main>
+</body>
+</html>

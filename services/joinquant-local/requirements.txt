@@ -1,0 +1,51 @@
+# ==============================================================================
+# 聚宽服务（services/joinquant-local）—— Python 侧依赖
+# ------------------------------------------------------------------------------
+# 适用范围：scripts/ 与 engine/ 下的 Python 脚本（共 64 个 .py）。
+#
+# ⚠️ 本服务的 Node 侧依赖不在这里，见同目录 package.json：
+#      dependencies : express / better-sqlite3 / cors / puppeteer-core
+#      devDependencies: playwright
+#
+# 运行环境：系统 Python 3.11+（本机实测 Python311）
+# 安装方式：pip install -r requirements.txt
+# ==============================================================================
+
+# ---------- 必需：数据处理 ----------
+pandas>=2.2
+#   因子计算、回测数据处理、同步脚本（9 个文件引用）
+#   被 factor_lib / factor_calc_stdlib / backtest_engine / unified_data_sync 等使用
+
+numpy>=1.26
+#   因子引擎数值运算（8 个文件引用）
+#   engine/factor_calc_stdlib.py 为纯标准库实现，numpy 在部分分析脚本中仍需要
+
+# ---------- 必需：数据源 ----------
+baostock>=0.8.9
+#   备选数据源（非主源）。用途：补 trade_calendar / index_daily / 股票名称口径。
+#   baostock_sync.py、update-daily-baostock.py 等 3 个文件引用。
+#   ⚠️ 已知问题：服务端间歇性故障——query_trade_dates 行迭代无超时永久挂起、
+#      WinError 10057、login 10002007。故日常增量主源是腾讯/新浪（见下）。
+#   ⚠️ baostock 登录不需要账号密码，但必须显式调用 login()/logout()。
+
+# ---------- 必需：图表输出 ----------
+matplotlib>=3.8
+#   分时图与绩效曲线输出（scripts/ 下的绘图脚本）
+
+# ---------- 无需安装（重要，勿画蛇添足）----------
+# jqdata / jqfactor / jqlib / kuanke 均为聚宽研究环境的**内部模块，不在 PyPI**。
+# engine/jqcompat.py 已内置空桩（_mk_module）替代它们，并导出 pd/np，
+# 因此聚宽策略源码可以直接在本地跑通，不需要、也无法 pip 安装。
+
+# ---------- 可选：打包 ----------
+# pyinstaller>=6.0
+#   仅在需要重新生成 services/joinquant-local/数据同步.exe 时安装。
+#   打包配方见同目录 数据同步.spec（入口 launcher.py）。
+#   该 exe 已随仓库分发，普通使用者无需安装 PyInstaller。
+
+# ---------- 依赖事实说明 ----------
+# 1) 主数据源（腾讯/新浪免费 HTTP）**仅用标准库 urllib**，因此这里没有 requests。
+#    相关脚本：scripts/backfill_daily_tx_sina.py、scripts/fetch_realtime.py、
+#              scripts/fetch_global.py、scripts/fetch_news_snapshot.py
+# 2) 历史全量数据来自 CSMAR（校级数据库），走离线导入，不是 API，无依赖。
+# 3) 数据库访问统一用标准库 sqlite3 + better-sqlite3（Node 侧），无 Python ORM 依赖。

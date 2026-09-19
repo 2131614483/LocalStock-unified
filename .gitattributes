@@ -1,0 +1,56 @@
+# ==============================================================================
+# LocalStock Unified —— Git 属性（换行符 / 二进制 / 语言统计）
+# ==============================================================================
+# 说明：本机 core.autocrlf=true，仓库内统一以 LF 存储、Windows 检出为 CRLF。
+#      为避免对已入库的 505 个文件造成全量换行符重写，这里不设置全局
+#      `* text=auto`，仅对需要精确控制的类型显式声明。
+
+# ---------- Windows 脚本必须保留 CRLF ----------
+*.bat   text eol=crlf
+*.cmd   text eol=crlf
+*.ps1   text eol=crlf
+*.psm1  text eol=crlf
+
+# ---------- Shell 脚本必须为 LF ----------
+*.sh    text eol=lf
+*.bash  text eol=lf
+
+# ---------- 二进制文件：禁止任何转换与文本 diff ----------
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.webp  binary
+*.ico   binary
+*.bmp   binary
+*.svg   text
+*.woff  binary
+*.woff2 binary
+*.ttf   binary
+*.eot   binary
+*.exe   binary
+*.dll   binary
+*.so    binary
+*.dylib binary
+*.zip   binary
+*.7z    binary
+*.rar   binary
+*.pkl   binary
+*.joblib binary
+*.npy   binary
+*.npz   binary
+*.db    binary
+*.xlsx  binary
+*.xls   binary
+*.pdf   binary
+
+# ---------- lock 文件：可折叠，不参与语言统计 ----------
+package-lock.json  -diff linguist-generated
+pnpm-lock.yaml     -diff linguist-generated
+yarn.lock          -diff linguist-generated
+
+# ---------- 文档目录不参与语言统计，保持 GitHub 首页语言条干净 ----------
+docs/**                        linguist-documentation
+**/docs/**                     linguist-documentation
+knowledge/**                   linguist-documentation
+*.md                           linguist-documentation

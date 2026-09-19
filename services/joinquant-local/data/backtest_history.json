@@ -1,0 +1,38 @@
+[
+  {
+    "date": "2026-08-12",
+    "strategy": "smallcap_v1",
+    "label": "小市值多因子",
+    "start": "2026-01-26",
+    "end": "2026-08-07",
+    "total_returns": -0.10402,
+    "benchmark_total_returns": -0.002661,
+    "sharpe": -1.3104,
+    "max_drawdown": -0.147673,
+    "win_rate": 0.27
+  },
+  {
+    "date": "2026-08-12",
+    "strategy": "multifactor_v1",
+    "label": "多因子综合",
+    "start": "2026-01-26",
+    "end": "2026-08-07",
+    "total_returns": -0.060828,
+    "benchmark_total_returns": -0.002661,
+    "sharpe": -0.8593,
+    "max_drawdown": -0.122311,
+    "win_rate": 0.3333
+  },
+  {
+    "date": "2026-08-12",
+    "strategy": "lowvol_v1",
+    "label": "低波",
+    "start": "2026-01-26",
+    "end": "2026-08-07",
+    "total_returns": -0.044891,
+    "benchmark_total_returns": -0.002661,
+    "sharpe": -0.9687,
+    "max_drawdown": -0.092579,
+    "win_rate": 0.4545
+  }
+]

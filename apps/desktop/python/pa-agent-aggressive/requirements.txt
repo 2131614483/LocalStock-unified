@@ -1,0 +1,78 @@
+# ==============================================================================
+# pa-agent-aggressive（激进版策略库）服务运行时依赖
+# ------------------------------------------------------------------------------
+# ⚠️ 与 pa-agent(稳定版) 共用同一个 venv：
+#      <userData>/pa-agent-venv  →  data/runtime/desktop/pa-agent-venv
+#    由桌面端 electron/pa/runtime.ts 自动创建，**不读本文件**。
+#    本文件与 pa-agent 那份保持同样的「必需 4 项」即可保证服务可启动，
+#    差异只体现在可选数据源与遗留 GUI 上（见下）。
+#
+# 服务入口：server.py → pa_service/runtime.py（纯 HTTP，无 GUI）
+# 配置文件：**无独立 config/ 目录**，与 pa-agent 共用 settings 结构与示例。
+#
+# 本 venv 实测安装结果（2026-09，Windows / Python 3.13）：
+#    openai 3.13.0 · pydantic 2.13.5 · jsonschema 4.26.0 · tzdata 2026.3
+#    ├─ venv 中**没有** PyQt6 / cursor_sdk / tushare / pandas —— 
+#    └─ 这反证以下可选依赖均不在服务端可达路径上（详见文末「可达性分析」）。
+# ==============================================================================
+
+# ---------- 必需（缺任一则服务起不来）----------
+openai>=1.40
+#   AI 调用客户端。除 DeepSeek 外，本版还支持 Anthropic 兼容与
+#   OpenAI 兼容网关（见 ai/mimo_compat.py、ai/cursor_sdk_client.py）。
+
+pydantic>=2.7
+#   配置模型与请求/响应结构校验（config/settings.py）。
+
+jsonschema>=4.0
+#   校验大模型返回 JSON 是否符合 schema（ai/json_validator.py）。
+
+tzdata>=2024.1
+#   Windows 无系统时区库，zoneinfo.ZoneInfo("Asia/Shanghai") 依赖它；
+#   本版 data/ 下引用更多（5 个文件），缺失会直接导入失败。
+
+# ---------- 可选：token 估算 ----------
+# tiktoken>=0.7
+#   缺失时 ai/token_counter.py 自动退化为「字符数 / 4」。
+
+# ---------- 可选数据源适配器（服务端不加载）----------
+# 与稳定版同理：服务端已改直读本地 stock_data.db
+# （data/localstock_source.py），以下仅被旧适配器引用。
+#
+# httpx>=0.27            # ai/qclaw_connector.py 等 4 个文件
+# requests>=2.32         # data/ashare_common.py 等 6 个文件
+# curl_cffi>=0.7         # data/eastmoney_client.py 等 2 个文件
+# cryptography>=42       # ai/workbuddy_connector.py
+# pandas>=2.2            # data/akshare_source.py 等 5 个文件
+# matplotlib>=3.8        # records/trade_logger.py
+# baostock>=0.8.9        # data/baostock_source.py 等 3 个文件
+# akshare>=1.14          # data/akshare_source.py
+# yfinance>=0.2          # data/yfinance_source.py
+# tvDatafeed>=2.1        # data/tradingview.py 等 2 个文件（非 PyPI，需从 GitHub 装）
+# MetaTrader5>=5.0       # data/mt5.py（仅 Windows，需本地 MT5 终端）
+# tushare>=1.4           # data/tushare_source.py（**本版新增**，需自备 token；
+#                        #   在 config/settings.py 的 provider 白名单中注册）
+
+# ---------- 可选：Cursor SDK（闭源，无 PyPI 包）----------
+# cursor_sdk
+#   ai/cursor_sdk_client.py 引用。这是 Cursor 官方的本地桥接 SDK，**不是 PyPI 包**，
+#   由本地已安装的 Cursor 提供（该文件内含 Windows 路径探测补丁
+#   _patch_cursor_sdk_bridge_windows）。缺失时该 provider 不可用，不影响主流程。
+
+# ---------- 可选：原 GUI 遗留入口（稳定版已清理，本版尚存）----------
+# PyQt6>=6.6
+#   本版**仍有 3 个文件是真实硬导入**（非注释）：
+#     pa_agent/main.py              → from PyQt6.QtWidgets import QApplication
+#     pa_agent/demo/replayer.py     → from PyQt6.QtCore import QObject, QTimer, pyqtSignal
+#     pa_agent/data/refresh_loop.py → from PyQt6.QtCore import QThread, pyqtSignal, QObject
+#   但这三者都是**旧 GUI 入口/回放工具**，从服务端入口出发不可达，故列为可选。
+#
+#   可达性分析（实测 grep 全仓引用）：
+#     server.py → pa_service/runtime.py → ai/{deepseek_client, json_validator,
+#     prompt_assembler, router, session_ledger} + config + data/localstock_source
+#     在 pa_service/、pa_agent/orchestrator/、pa_agent/ai/ 三个目录下搜索
+#     refresh_loop / demo.replayer / pa_agent.main **零命中** → 不加载。
+#
+#   若要跑旧 GUI，需要额外补装：PyQt6 + pyqtgraph + numpy
+#   （注意 ai/session_ledger.py 与 util/event_bus.py 里出现的 "PyQt6"
+#     只在解释迁移的注释里，实际已是纯 Python Signal 实现，无需安装）。

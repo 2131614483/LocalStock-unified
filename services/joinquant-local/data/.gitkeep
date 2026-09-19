@@ -1,0 +1,12 @@
+# 此目录存放本地数据库文件（已被 .gitignore 排除）
+#
+# 首次运行需准备以下数据库：
+#
+# 1. backtest.db —— 回测业务数据库
+#    由 server/db.js 自动创建（含建表语句和种子数据），无需手动操作
+#
+# 2. stock_data.db —— CSMAR 行情数据库（约 6GB，含 1850 万条日线数据）
+#    需通过 scripts/import-csmar.js 从 CSMAR 源数据导入：
+#      node scripts/import-csmar.js
+#    包含表：stock_daily, index_daily, index_info, market_daily,
+#            risk_free_rate, fs_combas, fs_comins, fs_comscfd 等
