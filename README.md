@@ -133,5 +133,16 @@ powershell -ExecutionPolicy Bypass -File .\tools\start-desktop.ps1
 1. jqdatasdk SDK 代码遵循 Apache License 2.0 协议；
 2. 通过该SDK获取的金融行情、财务等数据归属聚宽，使用数据需要单独申请JQData服务权限，并遵守聚宽平台用户协议；
 3. 本项目仅使用jqdatasdk作为数据查询客户端，不修改、分发jqdatasdk源码，也不二次分发从聚宽获取的原始金融数据。
+4. 本项目对数据接口进行了更换
 
-本项目引用paagent
+## 第三方组件声明
+本项目通过网络API调用 PA Agent
+- 项目名称：PA Agent
+- 版权：Copyright (C) 2026 PA Agent Contributors
+- 许可证：GNU Affero General Public License v3.0 (AGPL-3.0-or-later)
+- 协议原文：https://www.gnu.org/licenses/agpl-3.0.txt
+
+说明：
+1. PA Agent 为独立后端服务，本项目仅通过网络API与其交互；本项目**未嵌入、复制、链接 PA Agent 源码**，因此本项目代码不受 AGPLv3 协议传染。
+2. PA Agent 本身继续受 AGPLv3 约束：若 PA Agent 服务对外提供网络访问，PA Agent 的服务提供方需要遵守 AGPLv3 的源码公开义务，该义务不由本项目承担。
+3. 本项目量化代码仅用于学术研究，不构成任何投资建议。
