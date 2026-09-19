@@ -14,6 +14,7 @@ K 线从 1 分钟到季线全覆盖：1、5、15、30、60、120 分钟，再到
 模型后端支持云端、Ollama 本地，密钥只存运行态，不入库。
 行情走东财、腾讯、新浪多源，支持独立监盘窗、置顶大屏、任意视图拆浮窗。
 全部数据本地存储，不登录、不联网也能用，数据不出本机。
+本项目参考jukuan
 
 https://github.com/user-attachments/assets/cddf24f3-d675-4848-9ec9-a1b8487358f4
 
@@ -35,7 +36,7 @@ LocalStock Unified 是把桌面行情软件、本地研究/回测服务、统一
 ## 快速开始
 
 ```powershell
-cd D:\pythonpro\LocalStock-unified
+cd LocalStock-unified
 npm run install:all
 npm run verify:workspace
 powershell -ExecutionPolicy Bypass -File .\tools\start-all.ps1
@@ -51,8 +52,8 @@ powershell -ExecutionPolicy Bypass -File .\tools\start-desktop.ps1
 ## 界面预览
 
 ### 行情浏览
-<img width="2560" height="1390" alt="image" src="https://github.com/user-attachments/assets/c370fe35-3623-49f8-8681-b76665443ab5" />
-内置回测界面
+<img width="2560" height="1390" alt="image" src="https://github.com/user-attachments/assets/3b55e564-187e-4abd-85ea-df9e41860c8d" />
+海龟策略，内置回测界面
 <img src="docs/_shots/desktop-watchlist.png" width="900">
 *自选股主界面：红涨绿跌，实时刷新*
 
@@ -119,3 +120,18 @@ powershell -ExecutionPolicy Bypass -File .\tools\start-desktop.ps1
 | `tools`                      | 统一环境、启动和验证脚本                  |
 
 旧目录保持不动，不再作为后续开发入口。
+## 第三方依赖声明
+本项目引用 jqdatasdk（聚宽JQData Python SDK）
+
+- 项目名称：jqdatasdk
+- 作者：JoinQuant（聚宽，北京小龙虾科技有限公司）
+- 包地址：https://pypi.org/project/jqdatasdk/
+- 许可证：Apache License 2.0
+- 项目文档：https://www.joinquant.com/help/api/help?name=JQData
+
+说明：
+1. jqdatasdk SDK 代码遵循 Apache License 2.0 协议；
+2. 通过该SDK获取的金融行情、财务等数据归属聚宽，使用数据需要单独申请JQData服务权限，并遵守聚宽平台用户协议；
+3. 本项目仅使用jqdatasdk作为数据查询客户端，不修改、分发jqdatasdk源码，也不二次分发从聚宽获取的原始金融数据。
+
+本项目引用paagent
