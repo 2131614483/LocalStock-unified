@@ -14,6 +14,9 @@ K 线从 1 分钟到季线全覆盖：1、5、15、30、60、120 分钟，再到
 模型后端支持 DeepSeek、OpenCode、Anthropic、Ollama 本地，密钥只存运行态，不入库。
 行情走东财、腾讯、新浪多源冗余，支持独立监盘窗、置顶大屏、任意视图拆浮窗。
 全部数据本地存储，不登录、不联网也能用，数据不出本机。这就是 LocalStock Unified。
+
+https://github.com/user-attachments/assets/cddf24f3-d675-4848-9ec9-a1b8487358f4
+
 <img src="docs/_shots/desktop-watchlist.png" width="900">
 
 > 本地量化工作台：Electron 桌面端 + 聚宽兼容回测服务 + 统一行情库 + 价格行为 AI，全部跑在本地，不依赖云端。
