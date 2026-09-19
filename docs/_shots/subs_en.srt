@@ -1,0 +1,59 @@
+1
+00:00:00,000 --> 00:00:06,040
+LocalStock Unified is a fully local A-share market data, quantitative backtesting and AI analysis desktop tool.
+
+2
+00:00:06,040 --> 00:00:12,200
+Three components: the Electron desktop app, the JoinQuant-compatible backtesting service, and Price Action AI, all sharing one local SQLite database.
+
+3
+00:00:12,200 --> 00:00:17,430
+It covers all 5973 A-share stocks, with daily data from June 1991 to today, about 18.84 million rows.
+
+4
+00:00:17,430 --> 00:00:28,180
+K-lines span from 1-minute to quarterly, with MA, MACD, KDJ, Bollinger Bands, and fully customizable indicator parameters.
+
+5
+00:00:28,180 --> 00:00:34,450
+Drawing tools include six types: trend lines, rays, horizontal, rectangle, Fibonacci and channels. Draw by hand, or let AI draw for you.
+
+6
+00:00:34,450 --> 00:00:39,670
+Intraday charts refresh in real time, with aggregated news and announcements on the right, AI builds the timeline automatically.
+
+7
+00:00:39,670 --> 00:00:41,870
+Built-in strategy templates, CodeMirror Python editor, one-click backtesting.
+
+8
+00:00:41,870 --> 00:00:46,090
+The JoinQuant-compatible service is based on the open-source JoinQuant package under the MIT license. Turtle multi-factor backtest: 23% annualized, 0.65 Sharpe.
+
+9
+00:00:46,090 --> 00:00:48,090
+MA golden cross and death cross alerts scan the whole market instantly, deduplicated across restarts.
+
+10
+00:00:48,090 --> 00:00:54,170
+The Price Action AI follows the Al Brooks two-stage reasoning framework, outputting market diagnosis and trading decisions.
+
+11
+00:00:54,170 --> 00:01:07,120
+AI-first design: reads all market data, can analyze, draw, run backtests and screen stocks. Write operations are audited and one-click rollbackable.
+
+12
+00:01:07,120 --> 00:01:21,690
+Built-in strategy knowledge base. Future: knowledge graph for self-evolving algorithms, networked platform, and automated factor mining.
+
+13
+00:01:21,690 --> 00:01:28,190
+Model backend supports DeepSeek, OpenCode, Anthropic, and local Ollama. API keys stay in memory only, never written to disk.
+
+14
+00:01:28,190 --> 00:01:39,990
+Market data is sourced redundantly from Eastmoney, Tencent and Sina, with independent monitoring windows and floating views.
+
+15
+00:01:39,990 --> 00:02:00,000
+All data stays local. No login, no internet required. Your data never leaves this machine.
