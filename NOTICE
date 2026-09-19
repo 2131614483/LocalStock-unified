@@ -1,0 +1,21 @@
+LocalStock-unified
+Copyright 2026 hexiang
+
+This product includes software and references from third-party projects:
+
+1. jqdatasdk（JoinQuant JQData Python SDK）
+Copyright JoinQuant
+Licensed under Apache License 2.0
+
+2. Alphalens
+Copyright Quantopian
+Licensed under Apache License 2.0
+
+3. Detect_support_and_resistance_levels
+Copyright rosemarycox5334-debug
+The repository has no open-source license; only algorithm ideas are referenced, no source code copied.
+
+4. PA Agent
+Copyright (C) 2026 PA Agent Contributors
+Licensed under GNU Affero General Public License v3.0 (AGPL-3.0-or-later)
+Note: This project interacts with PA Agent only via network API, does not embed/copy PA Agent source code.
