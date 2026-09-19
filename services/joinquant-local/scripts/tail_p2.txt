@@ -1,0 +1,16 @@
+                        c = v[f1].corr(v[f2], method="spearman")
+                        vals.append(c)
+                if vals:
+                    avg = sum(vals) / len(vals)
+                    cors.loc[f1, f2] = avg
+                    cors.loc[f2, f1] = avg
+    # zhaochu gao xiangguan dui
+    high_pairs = []
+    for i, f1 in enumerate(self.factors):
+        for j, f2 in enumerate(self.factors):
+            if i < j:
+                v = cors.loc[f1, f2]
+                if not np.isnan(v) and abs(v) > 0.7:
+                    high_pairs.append((f1, f2, round(v, 3)))
+    high_pairs.sort(key=lambda x: -abs(x[2]))
+    return cors, high_pairs

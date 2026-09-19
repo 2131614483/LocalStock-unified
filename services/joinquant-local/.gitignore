@@ -1,0 +1,55 @@
+# 依赖
+node_modules/
+
+# 数据库文件（本地数据，需另行准备）
+data/*.db
+data/*.db-wal
+data/*.db-shm
+
+# Python 缓存
+__pycache__/
+*.pyc
+
+# 临时文件
+temp-*.js
+temp-*.py
+temp-*.json
+
+# 运行日志
+server.log
+server-test.log
+*.err
+
+# 临时调试文件
+scripts/.probe_tmp.txt
+scripts/test_*.py
+
+# 因子研究运行时产物
+data/*.pkl
+data/research_run.log
+scripts/.fix_*
+scripts/.indent_*
+scripts/.tmp_*
+
+# 同步运行时产物
+data/sync.log
+data/sync_background.log
+data/sync.lock
+data/sync_meta.json
+
+# PyInstaller 构建产物
+build/
+dist/
+*.spec
+
+# 环境变量
+.env
+.env.local
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/

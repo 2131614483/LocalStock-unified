@@ -1,0 +1,21 @@
+        w("# yinzi yanjiu baogao")
+        w("")
+        w("**shengcheng shijian**: " + datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+        w("**yangben qi**: " + self.start + " ~ " + self.end)
+        w("**yinzi shuliang**: " + str(len(self.factors)))
+        w("**yinzi liebiao**: " + ", ".join(self.factors))
+        w("")
+
+        # ---- IC huizong ----
+        w("## 1. Rank IC fenxi")
+        w("")
+        w("> IC junzhi >0 biaoshi yinzi zhi yu xia yue shouyi zhengxiangguan; IC_IR > 0.3 biaoshi yinzi wending; IC>0 bili yue gao fangxiang yue yizhi.")
+        w("")
+        w("| yinzi | IC junzhi | IC biaozhuncha | IC_IR | IC>0 bili | youxiao yueshu |")
+        w("|------|---------|----------|-------|----------|----------|")
+        ic_sorted = sorted(ic_results.items(),
+            key=lambda x: abs(x[1].get("IC_mean", 0)), reverse=True)
+        for f, v in ic_sorted:
+            w("| " + f + " | " + "{:.4f}".format(v["IC_mean"]) + " | " + "{:.4f}".format(v["IC_std"]) + " | "
+                  + "{:.3f}".format(v["IC_IR"]) + " | " + "{:.2%}".format(v["IC_gt0"]) + " | " + str(v["n"]) + " |")
+        w("")

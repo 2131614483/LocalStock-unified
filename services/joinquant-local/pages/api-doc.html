@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>量化回测平台 - API 接口文档</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📈</text></svg>">
+    <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+    <header class="navbar">
+        <div class="nav-container">
+            <a href="/" class="logo">量化回测平台</a>
+            <nav class="nav-links">
+                <a href="/">量化研究平台</a>
+                <a href="/pages/api-doc.html" style="color:#fff;">API文档</a>
+            </nav>
+        </div>
+    </header>
+
+    <div class="api-doc">
+        <h1>量化回测平台 API 接口文档</h1>
+        <p style="color:#666;margin-bottom:32px;">本文档整理了平台提供的所有 API 接口。</p>
+
+        <h2>1. 策略管理 API</h2>
+
+        <div class="endpoint">
+            <span class="method get">GET</span> <code>/algorithm/index/list</code>
+            <span style="color:#999;margin-left:12px;">获取策略列表</span>
+        </div>
+        <div class="endpoint">
+            <span class="method get">GET</span> <code>/algorithm/index/edit?algorithmId={id}</code>
+            <span style="color:#999;margin-left:12px;">编辑策略</span>
+        </div>
+
+        <h2>2. 回测管理 API</h2>
+
+        <div class="endpoint">
+            <span class="method get">GET</span> <code>/algorithm/backtest/detail?backtestId={id}</code>
+            <span style="color:#999;margin-left:12px;">回测详情页面</span>
+        </div>
+        <div class="endpoint">
+            <span class="method get">GET</span> <code>/algorithm/backtest/list?algorithmId={id}</code>
+            <span style="color:#999;margin-left:12px;">回测列表</span>
+        </div>
+        <div class="endpoint">
+            <span class="method get">GET</span> <code>/algorithm/backtest/buildList?algorithmId={id}</code>
+            <span style="color:#999;margin-left:12px;">回测构建配置列表</span>
+        </div>
+
+        <h2>3. 回测数据 API (JSON)</h2>
+        <p>以下是本地服务的 RESTful 数据接口：</p>
+
+        <div class="endpoint">
+            <span class="method get">GET</span> <code>/api/backtest/:id/summary</code>
+            <span style="color:#999;margin-left:12px;">回测概要</span>
+        </div>
+        <div class="endpoint">
+            <span class="method get">GET</span> <code>/api/backtest/:id/returns</code>
+            <span style="color:#999;margin-left:12px;">策略收益</span>
+        </div>
+        <div class="endpoint">
+            <span class="method get">GET</span> <code>/api/backtest/:id/trades</code>
+            <span style="color:#999;margin-left:12px;">交易详情</span>
+        </div>
+        <div class="endpoint">
+            <span class="method get">GET</span> <code>/api/backtest/:id/positions</code>
+            <span style="color:#999;margin-left:12px;">每日持仓收益</span>
+        </div>
+        <div class="endpoint">
+            <span class="method get">GET</span> <code>/api/backtest/:id/benchmark</code>
+            <span style="color:#999;margin-left:12px;">基准收益</span>
+        </div>
+        <div class="endpoint">
+            <span class="method get">GET</span> <code>/api/backtest/:id/logs</code>
+            <span style="color:#999;margin-left:12px;">日志输出</span>
+        </div>
+        <div class="endpoint">
+            <span class="method get">GET</span> <code>/api/backtest/:id/code</code>
+            <span style="color:#999;margin-left:12px;">策略代码</span>
+        </div>
+        <div class="endpoint">
+            <span class="method get">GET</span> <code>/api/backtest/:id/export?type=transaction|position|log</code>
+            <span style="color:#999;margin-left:12px;">导出数据</span>
+        </div>
+
+        <h3>响应格式</h3>
+        <pre><code>{
+    "code": 0,
+    "data": { ... },
+    "message": "success"
+}</code></pre>
+
+        <h2>4. 模拟交易 API</h2>
+        <div class="endpoint">
+            <span class="method get">GET</span> <code>/algorithm/trade/list?process=1</code>
+            <span style="color:#999;margin-left:12px;">模拟交易列表</span>
+        </div>
+        <div class="endpoint">
+            <span class="method post">POST</span> <code>/algorithm/trade/start</code>
+            <span style="color:#999;margin-left:12px;">启动模拟交易</span>
+        </div>
+
+        <h2>5. jqdata Python SDK API</h2>
+        <p>平台提供的本地数据 Python 包，用于获取金融数据：</p>
+
+        <pre><code>from jqdata import *
+
+# 获取行情
+df = get_price('000001.XSHE', start_date='2023-01-01', end_date='2023-12-31',
+               frequency='daily', fields=['open','close','high','low','volume'])
+
+# 获取财务数据
+df = get_fundamentals(query(valuation, indicator).filter(...))
+
+# 获取指数成分股
+stocks = get_index_stocks('000300.XSHG')
+
+# 获取交易日
+dates = get_trade_dates(start_date='2023-01-01', end_date='2023-12-31')
+</code></pre>
+
+        <table>
+            <tr><th>函数</th><th>说明</th></tr>
+            <tr><td><code>get_price()</code></td><td>获取历史行情数据</td></tr>
+            <tr><td><code>get_fundamentals()</code></td><td>获取财务数据</td></tr>
+            <tr><td><code>get_trade_dates()</code></td><td>获取交易日列表</td></tr>
+            <tr><td><code>get_all_securities()</code></td><td>获取所有证券信息</td></tr>
+            <tr><td><code>get_security_info()</code></td><td>获取单个证券详情</td></tr>
+            <tr><td><code>get_index_stocks()</code></td><td>获取指数成分股</td></tr>
+            <tr><td><code>get_industry_stocks()</code></td><td>获取行业股票</td></tr>
+            <tr><td><code>get_mtss()</code></td><td>获取融资融券数据</td></tr>
+            <tr><td><code>get_extras()</code></td><td>获取额外信息</td></tr>
+        </table>
+
+        <h2>6. 策略 Python API</h2>
+        <p>平台回测引擎内建 API，用于编写量化策略：</p>
+
+        <table>
+            <tr><th>函数/对象</th><th>说明</th></tr>
+            <tr><td><code>initialize(context)</code></td><td>初始化函数</td></tr>
+            <tr><td><code>handle_data(context, data)</code></td><td>每日数据处理</td></tr>
+            <tr><td><code>run_daily() / run_weekly() / run_monthly()</code></td><td>定时运行</td></tr>
+            <tr><td><code>order(security, amount)</code></td><td>按股数下单</td></tr>
+            <tr><td><code>order_target(security, amount)</code></td><td>调整至目标股数</td></tr>
+            <tr><td><code>order_value(security, value)</code></td><td>按金额下单</td></tr>
+            <tr><td><code>order_target_value(security, value)</code></td><td>调整至目标金额</td></tr>
+            <tr><td><code>context.portfolio</code></td><td>投资组合信息</td></tr>
+            <tr><td><code>context.portfolio.positions</code></td><td>持仓信息</td></tr>
+            <tr><td><code>get_current_data()</code></td><td>获取当前数据</td></tr>
+            <tr><td><code>attribute_history()</code></td><td>获取属性历史</td></tr>
+            <tr><td><code>set_benchmark()</code></td><td>设置基准</td></tr>
+            <tr><td><code>set_commission()</code></td><td>设置手续费</td></tr>
+        </table>
+    </div>
+</body>
+</html>

@@ -1,0 +1,22 @@
+appId: com.opendevsociety.localstock
+productName: LocalStock
+directories:
+  buildResources: build
+  output: dist
+files:
+  - out/**
+  - package.json
+  - build/icon.png
+extraResources:
+  - from: python
+    to: python
+asar: true
+npmRebuild: true
+win:
+  target:
+    - portable
+  icon: build/icon.png
+portable:
+  artifactName: LocalStock-portable-${version}.exe
+electronDownload:
+  mirror: https://npmmirror.com/mirrors/electron/

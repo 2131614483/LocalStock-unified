@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>量化回测平台 - 编辑策略</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📈</text></svg>">
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <script src="../assets/js/api.js"></script>
+    <style>
+        .edit-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 24px 20px;
+        }
+        .edit-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        .edit-header h2 { font-size: 22px; }
+        .edit-header .actions { display: flex; gap: 10px; }
+        .edit-meta {
+            background: #fff;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 16px 20px;
+            margin-bottom: 20px;
+            display: flex;
+            gap: 32px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            flex-wrap: wrap;
+        }
+        .edit-meta strong { color: var(--text); }
+        .editor-wrap {
+            background: #1e1e1e;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+        .editor-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 16px;
+            background: #252526;
+            color: #ccc;
+            font-size: 13px;
+            border-bottom: 1px solid #333;
+        }
+        .editor-toolbar .lang-tag {
+            background: #1890ff;
+            color: #fff;
+            padding: 2px 10px;
+            border-radius: 3px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        #codeEditor {
+            width: 100%;
+            min-height: 520px;
+            background: #1e1e1e;
+            color: #d4d4d4;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            padding: 20px;
+            border: none;
+            outline: none;
+            resize: vertical;
+            tab-size: 4;
+            white-space: pre;
+            overflow-wrap: normal;
+            overflow: auto;
+        }
+        .status-bar {
+            padding: 10px 16px;
+            background: #fff;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            margin-top: 16px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .status-bar .msg { display: flex; align-items: center; gap: 8px; }
+        .status-bar .msg.success { color: var(--success); }
+        .status-bar .msg.error { color: var(--danger); }
+        .loading {
+            text-align: center;
+            padding: 80px 0;
+            color: #999;
+        }
+        .back-link {
+            color: var(--primary);
+            text-decoration: none;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        /* 回测参数区 */
+        .run-section {
+            background: #fff;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 20px 24px;
+            margin-bottom: 20px;
+        }
+        .run-section h3 {
+            font-size: 15px;
+            margin-bottom: 16px;
+            color: var(--text);
+        }
+        .run-row {
+            display: flex;
+            gap: 20px;
+            align-items: flex-end;
+            flex-wrap: wrap;
+        }
+        .date-field {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .date-field label {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+        .date-input-wrap {
+            position: relative;
+        }
+        .date-input {
+            width: 180px;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            background: #fff;
+            color: var(--text);
+            transition: border-color 0.2s;
+        }
+        .date-input:hover { border-color: var(--primary); }
+        .date-input.selected { border-color: var(--primary); font-weight: 600; }
+        .date-input.empty { color: #bbb; }
+        .date-range-hint {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-left: 4px;
+        }
+        .date-range-hint .data-range {
+            color: var(--primary);
+            font-weight: 600;
+        }
+        /* 日历弹窗 */
+        .calendar-popup {
+            position: absolute;
+            top: 42px;
+            left: 0;
+            z-index: 1000;
+            background: #fff;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+            padding: 16px;
+            width: 300px;
+        }
+        .cal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            gap: 4px;
+        }
+        .cal-nav-group {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .cal-select {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 3px 6px;
+            font-size: 13px;
+            color: var(--text);
+            background: #fff;
+            cursor: pointer;
+        }
+        .cal-select:hover { border-color: var(--primary); }
+        .cal-nav-btn {
+            background: none;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 4px 10px;
+            cursor: pointer;
+            font-size: 14px;
+            color: var(--text);
+        }
+        .cal-nav-btn:hover { border-color: var(--primary); color: var(--primary); }
+        .cal-nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+        .cal-title { font-size: 15px; font-weight: 600; }
+        .cal-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 2px;
+        }
+        .cal-weekday {
+            text-align: center;
+            font-size: 12px;
+            color: var(--text-secondary);
+            padding: 4px 0;
+        }
+        .cal-cell {
+            text-align: center;
+            padding: 7px 0;
+            font-size: 13px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.15s;
+            min-width: 32px;
+        }
+        .cal-cell.trade-day { color: var(--text); }
+        .cal-cell.trade-day:hover { background: var(--primary); color: #fff; }
+        .cal-cell.trade-day.selected { background: var(--primary); color: #fff; font-weight: 700; }
+        .cal-cell.in-range { background: #e6f7ff; color: var(--primary); }
+        .cal-cell.non-trade { color: #ccc; cursor: not-allowed; }
+        .cal-cell.other-month { color: #eee; cursor: default; }
+        .cal-legend {
+            display: flex;
+            gap: 16px;
+            margin-top: 12px;
+            padding-top: 10px;
+            border-top: 1px solid #f0f0f0;
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+        .cal-legend span { display: flex; align-items: center; gap: 4px; }
+        .cal-legend .dot {
+            display: inline-block;
+            width: 10px; height: 10px;
+            border-radius: 2px;
+        }
+        .cal-legend .dot.blue { background: var(--primary); }
+        .cal-legend .dot.gray { background: #eee; }
+        .capital-input {
+            width: 140px;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            background: #fff;
+            color: var(--text);
+            transition: border-color 0.2s;
+        }
+        .capital-input:hover { border-color: var(--primary); }
+        .capital-input:focus { border-color: var(--primary); outline: none; }
+        .run-btn-wrap { margin-left: auto; display: flex; gap: 10px; }
+    </style>
+</head>
+<body>
+    <header class="navbar">
+        <div class="nav-container">
+            <a href="/" class="logo">量化回测平台</a>
+            <nav class="nav-links">
+                <a href="/">量化研究平台</a>
+                <a href="/pages/api-doc.html">API文档</a>
+            </nav>
+            <div class="nav-user">
+                <span class="user-avatar">👤</span>
+            </div>
+        </div>
+    </header>
+
+    <div class="edit-container" id="editContainer">
+        <div class="loading" id="loading">加载策略代码中...</div>
+    </div>
+
+    <script>
+        const BACKTEST_ID = new URLSearchParams(location.search).get('id') || '886dc04e9fe1547dac9b4b43d647ae9d';
+
+        // ========== Toast 通知系统（全局） ==========
+        const Toast = {
+            _container: null,
+            _init() {
+                if (!this._container) {
+                    this._container = document.createElement('div');
+                    this._container.className = 'toast-container';
+                    document.body.appendChild(this._container);
+                }
+            },
+            show(title, message, type = 'info', duration = 4000) {
+                this._init();
+                const icons = { success: '✓', error: '✕', warning: '⚠', info: 'ℹ' };
+                const toast = document.createElement('div');
+                toast.className = `toast ` + type;
+                toast.innerHTML = '<span class="toast-icon">' + (icons[type] || icons.info) + '</span>' +
+                    '<div class="toast-body"><div class="toast-title">' + title + '</div>' +
+                    (message ? '<div class="toast-msg">' + message + '</div>' : '') + '</div>' +
+                    '<button class="toast-close" onclick="this.parentElement.classList.add(\'removing\');setTimeout(()=>this.parentElement.remove(),300)">&times;</button>';
+                this._container.appendChild(toast);
+                if (duration > 0) {
+                    setTimeout(() => { toast.classList.add('removing'); setTimeout(() => toast.remove(), 300); }, duration);
+                }
+                return toast;
+            },
+            success(t, m, d) { return this.show(t, m, 'success', d); },
+            error(t, m, d) { return this.show(t, m, 'error', d || 6000); },
+            warning(t, m, d) { return this.show(t, m, 'warning', d); },
+            info(t, m, d) { return this.show(t, m, 'info', d); },
+        };
+
+        // ========== 加载遮罩工具 ==========
+        const Overlay = {
+            show(title, sub) {
+                this.hide();
+                const overlay = document.createElement('div');
+                overlay.className = 'overlay-mask';
+                overlay.id = 'loadingOverlay';
+                overlay.innerHTML = '<div class="overlay-card"><div class="spinner"></div><div class="overlay-title">' + (title || '处理中...') + '</div><div class="overlay-sub">' + (sub || '') + '</div></div>';
+                document.body.appendChild(overlay);
+                return overlay;
+            },
+            hide() { const el = document.getElementById('loadingOverlay'); if (el) el.remove(); },
+        };
+
+        // ========== 回测结果弹窗 ==========
+        function showResultModal(result, startDate, endDate) {
+            const modal = document.createElement('div');
+            modal.className = 'result-modal';
+            const period = startDate && endDate ? startDate + ' ~ ' + endDate : '';
+            const fmtPct = v => (v * 100).toFixed(2) + '%';
+            const valClass = v => v >= 0 ? 'positive' : 'negative';
+            const sign = v => v >= 0 ? '+' : '';
+            let body = '';
+            if (period) body += '<div class="result-row"><span class="result-label">回测期间</span><span class="result-value">' + period + '</span></div>';
+            body += '<div class="result-row"><span class="result-label">交易日</span><span class="result-value">' + result.tradingDays + ' 天</span></div>';
+            body += '<div class="result-row"><span class="result-label">总收益</span><span class="result-value ' + valClass(result.totalReturns) + '">' + sign(result.totalReturns) + fmtPct(result.totalReturns) + '</span></div>';
+            body += '<div class="result-row"><span class="result-label">年化收益</span><span class="result-value ' + valClass(result.annualReturns) + '">' + sign(result.annualReturns) + fmtPct(result.annualReturns) + '</span></div>';
+            body += '<div class="result-row"><span class="result-label">最大回撤</span><span class="result-value negative">' + fmtPct(result.maxDrawdown) + '</span></div>';
+            body += '<div class="result-row"><span class="result-label">夏普比率</span><span class="result-value">' + (result.sharpe != null ? result.sharpe.toFixed(2) : '--') + '</span></div>';
+            body += '<div class="result-row"><span class="result-label">交易笔数</span><span class="result-value">' + result.tradesCount + ' 笔</span></div>';
+            modal.innerHTML = '<div class="result-card"><div class="result-header success">✓ 回测完成</div><div class="result-body">' + body + '</div><div class="result-footer"><button class="btn btn-primary" onclick="this.closest(\'.result-modal\').remove();location.reload()">查看结果</button></div></div>';
+            modal.addEventListener('click', function(e) { if (e.target === modal) { modal.remove(); location.reload(); } });
+            document.body.appendChild(modal);
+        }
+        let originalCode = '';
+        let summaryData = null;
+        let calendarRange = null;
+        // 选中的日期范围
+        let selectedStart = '';
+        let selectedEnd = '';
+        // 日历状态
+        let calCurrentDate = new Date();
+        let calTarget = null; // 'start' | 'end'
+        let tradeDaysCache = {}; // key: "YYYY-MM" -> Set
+
+        // ========== 日期范围记忆（localStorage） ==========
+        const DATE_STORAGE_KEY = `backtest_date_range_${BACKTEST_ID}`;
+        const CAPITAL_STORAGE_KEY = `backtest_capital_${BACKTEST_ID}`;
+        let selectedCapital = 1000000;
+
+        function saveDateRange() {
+            if (selectedStart && selectedEnd) {
+                try {
+                    localStorage.setItem(DATE_STORAGE_KEY, JSON.stringify({ start: selectedStart, end: selectedEnd }));
+                } catch (e) { /* 忽略存储异常 */ }
+            }
+        }
+
+        function saveCapital() {
+            try { localStorage.setItem(CAPITAL_STORAGE_KEY, String(selectedCapital)); } catch (e) { /* 忽略 */ }
+        }
+
+        function loadCapital() {
+            try {
+                const saved = localStorage.getItem(CAPITAL_STORAGE_KEY);
+                if (saved) { const v = parseFloat(saved); if (!isNaN(v) && v > 0) return v; }
+            } catch (e) { /* 忽略 */ }
+            return null;
+        }
+
+        function onCapitalChange() {
+            const input = document.getElementById('capitalInput');
+            if (!input) return;
+            let val = parseFloat(input.value);
+            if (isNaN(val) || val < 1000) {
+                val = 1000000;
+                input.value = val;
+                Toast.warning('初始资金无效', '已重置为 1,000,000');
+            }
+            selectedCapital = val;
+            saveCapital();
+        }
+
+        function loadDateRange() {
+            try {
+                const saved = localStorage.getItem(DATE_STORAGE_KEY);
+                if (saved) {
+                    const obj = JSON.parse(saved);
+                    if (obj.start && obj.end) return obj;
+                }
+            } catch (e) { /* 忽略解析异常 */ }
+            return null;
+        }
+
+        function getDefaultDateRange() {
+            if (!calendarRange || !calendarRange.max_date) return { start: '', end: '' };
+            const maxDateStr = String(calendarRange.max_date).replace(/"/g, '');
+            const maxDate = new Date(maxDateStr + 'T00:00:00');
+            if (isNaN(maxDate.getTime())) return { start: '', end: '' };
+            const end = maxDateStr;
+            const startDate = new Date(maxDate);
+            startDate.setFullYear(startDate.getFullYear() - 2);
+            const start = startDate.toISOString().slice(0, 10);
+            return { start, end };
+        }
+
+        async function init() {
+            try {
+                const [summary, codeData, range] = await Promise.all([
+                    ApiClient.getBacktestSummary(BACKTEST_ID),
+                    ApiClient.getBacktestCode(BACKTEST_ID),
+                    ApiClient.getCalendarRange(),
+                ]);
+                summaryData = summary;
+                originalCode = codeData.code;
+                calendarRange = range;
+                // 优先使用记忆的日期范围，否则使用默认（最新数据前 2 年）
+                const remembered = loadDateRange();
+                if (remembered) {
+                    selectedStart = remembered.start;
+                    selectedEnd = remembered.end;
+                } else {
+                    const defaults = getDefaultDateRange();
+                    selectedStart = defaults.start;
+                    selectedEnd = defaults.end;
+                }
+                // 初始资金：优先使用记忆值，否则使用数据库值
+                const rememberedCapital = loadCapital();
+                selectedCapital = rememberedCapital || summary.capitalBase;
+                renderPage(summary, codeData);
+            } catch (err) {
+                document.getElementById('editContainer').innerHTML = `
+                    <div class="loading">
+                        <h2 style="color:var(--danger);">加载失败</h2>
+                        <p style="margin-top:12px;">${err.message || '请确保后端服务已启动'}</p>
+                        <a href="/" class="back-link" style="display:inline-block;margin-top:16px;">← 返回首页</a>
+                    </div>
+                `;
+            }
+        }
+
+        function renderPage(summary, codeData) {
+            const rangeText = calendarRange
+                ? `数据范围: <span class="data-range">${calendarRange.min_date} ~ ${calendarRange.max_date}</span> (${calendarRange.total} 个交易日)`
+                : '';
+            document.getElementById('editContainer').innerHTML = `
+                <div class="edit-header">
+                    <div style="display:flex;align-items:center;gap:8px;"><span style="font-size:16px;color:var(--text-secondary);">编辑策略 -</span><input type="text" id="strategyNameInput" class="strategy-name-input" value="${summary.algorithmName}" placeholder="策略名称（可修改）" onchange="onStrategyNameChange()"><span id="fileNameTag" class="file-name-tag" style="display:none;"></span></div>
+                    <div class="actions">
+                        <a href="/" class="btn back-link">← 返回</a>
+                        <button class="btn import-file-btn">导入文件<input type="file" accept=".py" onchange="importPythonFile(event)"></button>
+                        <button class="btn btn-primary" onclick="saveCode()">保存代码</button>
+                        <button class="btn btn-success" onclick="resetCode()">重置</button>
+                    </div>
+                </div>
+                <div class="edit-meta">
+                    <span>回测ID: <strong>${summary.backtestId}</strong></span>
+                    <span>初始资金: <strong>¥${summary.capitalBase.toLocaleString()}</strong></span>
+                    <span>频率: <strong>${summary.frequency}</strong></span>
+                </div>
+                <div class="run-section">
+                    <h3>回测参数</h3>
+                    <div class="run-row">
+                        <div class="date-field">
+                            <label>开始日期</label>
+                            <div class="date-input-wrap">
+                                <input type="text" id="startDateInput" class="date-input" readonly
+                                    value="${selectedStart}" onclick="openCalendar('start')" placeholder="点击选择">
+                            </div>
+                        </div>
+                        <div class="date-field">
+                            <label>结束日期</label>
+                            <div class="date-input-wrap">
+                                <input type="text" id="endDateInput" class="date-input" readonly
+                                    value="${selectedEnd}" onclick="openCalendar('end')" placeholder="点击选择">
+                            </div>
+                        </div>
+                        <div class="date-field">
+                            <label>初始资金</label>
+                            <div class="date-input-wrap">
+                                <input type="number" id="capitalInput" class="capital-input"
+                                    value="${selectedCapital}" min="1000" step="10000"
+                                    onchange="onCapitalChange()" placeholder="1000000">
+                            </div>
+                        </div>
+                        <div class="date-field">
+                            <label>&nbsp;</label>
+                            <span class="date-range-hint">${rangeText}</span>
+                        </div>
+                        <div class="run-btn-wrap">
+                            <button class="btn" onclick="resetDateRange()" title="重置为最新数据前 2 年">重置日期</button>
+                            <button class="btn btn-success" onclick="runBacktest()" id="runBtn">运行回测</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="editor-wrap">
+                    <div class="editor-toolbar">
+                        <span>策略源代码</span>
+                        <span class="lang-tag">${codeData.language}</span>
+                    </div>
+                    <textarea id="codeEditor" spellcheck="false"></textarea>
+                </div>
+                <div class="status-bar">
+                    <span class="msg" id="statusMsg">就绪</span>
+                    <span id="charCount">0 字符</span>
+                </div>
+            `;
+            const editor = document.getElementById('codeEditor');
+            editor.value = codeData.code;
+            editor.addEventListener('input', updateCharCount);
+            updateCharCount();
+
+            // 支持 Tab 缩进
+            editor.addEventListener('keydown', (e) => {
+                if (e.key === 'Tab') {
+                    e.preventDefault();
+                    const start = editor.selectionStart;
+                    const end = editor.selectionEnd;
+                    editor.value = editor.value.slice(0, start) + '    ' + editor.value.slice(end);
+                    editor.selectionStart = editor.selectionEnd = start + 4;
+                    updateCharCount();
+                }
+            });
+        }
+
+        function updateCharCount() {
+            const editor = document.getElementById('codeEditor');
+            document.getElementById('charCount').textContent = `${editor.value.length} 字符`;
+        }
+
+        async function saveCode() {
+            const editor = document.getElementById('codeEditor');
+            const nameInput = document.getElementById('strategyNameInput');
+            const msg = document.getElementById('statusMsg');
+            const newCode = editor.value;
+            const newName = nameInput ? nameInput.value.trim() : null;
+            msg.className = 'msg';
+            msg.textContent = '保存中...';
+            try {
+                await ApiClient.saveBacktestCode(BACKTEST_ID, 'python', newCode, newName);
+                originalCode = newCode;
+                if (nameInput && newName) nameInput.value = newName;
+                msg.className = 'msg success';
+                msg.textContent = '✓ 保存成功';
+                Toast.success('保存成功', newName ? ('策略「' + newName + '」已保存') : '策略代码已保存');
+            } catch (err) {
+                msg.className = 'msg error';
+                msg.textContent = '✗ 保存失败: ' + (err.message || '未知错误');
+                Toast.error('保存失败', err.message || '未知错误');
+            }
+        }
+
+        // 策略名称修改：实时更新页面标题
+        function onStrategyNameChange() {
+            const nameInput = document.getElementById('strategyNameInput');
+            if (!nameInput) return;
+            const v = nameInput.value.trim();
+            if (!v) { nameInput.value = summaryData ? summaryData.algorithmName : '策略'; return; }
+            document.title = '量化回测平台 - ' + v;
+        }
+
+        // 导入本地 Python 文件：文件名（去扩展名）作为策略名，内容填入编辑器
+        function importPythonFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            if (!/\.py$/i.test(file.name)) {
+                Toast.warning('文件类型错误', '请选择 .py 文件');
+                event.target.value = '';
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const text = e.target.result;
+                const editor = document.getElementById('codeEditor');
+                if (editor) {
+                    editor.value = text;
+                    updateCharCount();
+                }
+                // 文件名（去 .py）作为策略名
+                const baseName = file.name.replace(/\.py$/i, '');
+                const nameInput = document.getElementById('strategyNameInput');
+                if (nameInput) nameInput.value = baseName;
+                // 显示文件名标签
+                const tag = document.getElementById('fileNameTag');
+                if (tag) { tag.textContent = '📂 ' + file.name; tag.style.display = 'inline-block'; }
+                const label = document.getElementById('fileLabel');
+                if (label) label.textContent = '已导入: ' + file.name;
+                document.title = '量化回测平台 - ' + baseName;
+                Toast.success('导入成功', '已加载 ' + file.name + '（' + text.length + ' 字符）');
+            };
+            reader.onerror = function() {
+                Toast.error('导入失败', '无法读取文件');
+            };
+            reader.readAsText(file);
+            // 允许重复选择同一文件
+            event.target.value = '';
+        }
+
+        function resetCode() {
+            const editor = document.getElementById('codeEditor');
+            if (editor.value === originalCode) { Toast.info('提示', '代码未修改'); return; }
+            if (confirm('确定要放弃当前修改并重置为已保存的版本吗？')) {
+                editor.value = originalCode;
+                updateCharCount();
+                const msg = document.getElementById('statusMsg');
+                msg.className = 'msg';
+                msg.textContent = '已重置为已保存版本';
+            }
+        }
+
+        // ==================== 日历组件 ====================
+
+        /** 打开日历弹窗 */
+        async function openCalendar(target) {
+            calTarget = target;
+            // 关闭已有弹窗
+            closeCalendar();
+            // 初始化日历显示月份：开始日期默认显示选中月开始月，结束日期显示结束月
+            const refDate = target === 'start' ? selectedStart : selectedEnd;
+            if (refDate) {
+                calCurrentDate = new Date(refDate + 'T00:00:00');
+            } else {
+                calCurrentDate = new Date();
+            }
+            const wrap = (target === 'start')
+                ? document.querySelector('#startDateInput').parentElement
+                : document.querySelector('#endDateInput').parentElement;
+            await renderCalendar(wrap);
+        }
+
+        /** 渲染日历 */
+        async function renderCalendar(parentEl) {
+            const year = calCurrentDate.getFullYear();
+            const month = calCurrentDate.getMonth() + 1;
+            const cacheKey = `${year}-${String(month).padStart(2, '0')}`;
+
+            // 获取该月交易日
+            if (!tradeDaysCache[cacheKey]) {
+                try {
+                    const resp = await ApiClient.getMonthTradeDays(year, month);
+                    tradeDaysCache[cacheKey] = new Set(resp);
+                } catch (e) {
+                    tradeDaysCache[cacheKey] = new Set();
+                }
+            }
+            const tradeDays = tradeDaysCache[cacheKey];
+
+            // 数据范围边界
+            const minDate = calendarRange ? calendarRange.min_date.replace(/"/g, '') : null;
+            const maxDate = calendarRange ? calendarRange.max_date.replace(/"/g, '') : null;
+
+            // 构建日历 HTML
+            const firstDay = new Date(year, month - 1, 1);
+            const lastDay = new Date(year, month, 0);
+            const startWeekday = firstDay.getDay(); // 0=周日
+            const daysInMonth = lastDay.getDate();
+
+            const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
+            let html = '<div class="calendar-popup" id="calPopup">';
+            html += '<div class="cal-header">';
+            // 年份和月份范围
+            const minYear = minDate ? parseInt(minDate.substring(0, 4)) : 2010;
+            const maxYear = maxDate ? parseInt(maxDate.substring(0, 4)) : year + 1;
+            // 左侧：上年 + 上月
+            html += '<div class="cal-nav-group">';
+            html += `<button class="cal-nav-btn" onclick="calNavigateYear(-1)" ${year <= minYear ? 'disabled' : ''}>‹‹</button>`;
+            html += `<button class="cal-nav-btn" onclick="calNavigate(-1)">‹</button>`;
+            html += '</div>';
+            // 中间：年月下拉选择器
+            html += '<div class="cal-nav-group">';
+            let yearOpts = '';
+            for (let y = minYear; y <= maxYear; y++) {
+                yearOpts += `<option value="${y}" ${y === year ? 'selected' : ''}>${y}年</option>`;
+            }
+            html += `<select class="cal-select" onchange="calSelectYear(this.value)">${yearOpts}</select>`;
+            const monthNames = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+            let monthOpts = '';
+            for (let m = 1; m <= 12; m++) {
+                monthOpts += `<option value="${m}" ${m === month ? 'selected' : ''}>${monthNames[m-1]}</option>`;
+            }
+            html += `<select class="cal-select" onchange="calSelectMonth(this.value)">${monthOpts}</select>`;
+            html += '</div>';
+            // 右侧：下月 + 下年
+            html += '<div class="cal-nav-group">';
+            html += `<button class="cal-nav-btn" onclick="calNavigate(1)">›</button>`;
+            html += `<button class="cal-nav-btn" onclick="calNavigateYear(1)" ${year >= maxYear ? 'disabled' : ''}>››</button>`;
+            html += '</div>';
+            html += '</div>';
+            html += '<div class="cal-grid">';
+            weekdays.forEach(w => { html += `<div class="cal-weekday">${w}</div>`; });
+
+            // 前置空格
+            for (let i = 0; i < startWeekday; i++) {
+                html += '<div class="cal-cell other-month"></div>';
+            }
+
+            // 日期格子
+            for (let d = 1; d <= daysInMonth; d++) {
+                const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                const isTrade = tradeDays.has(dateStr);
+                const inRange = selectedStart && selectedEnd && dateStr > selectedStart && dateStr < selectedEnd;
+                const isSelected = dateStr === selectedStart || dateStr === selectedEnd;
+
+                let cls = 'cal-cell ';
+                if (isTrade) {
+                    cls += 'trade-day';
+                    if (isSelected) cls += ' selected';
+                    else if (inRange) cls += ' in-range';
+                    html += `<div class="${cls}" onclick="selectDate('${dateStr}')">${d}</div>`;
+                } else {
+                    cls += 'non-trade';
+                    html += `<div class="${cls}">${d}</div>`;
+                }
+            }
+
+            html += '</div>';
+            // 图例
+            html += '<div class="cal-legend">';
+            html += '<span><span class="dot blue"></span>交易日（可选）</span>';
+            html += '<span><span class="dot gray"></span>非交易日</span>';
+            html += '</div>';
+            html += '</div>';
+
+            parentEl.insertAdjacentHTML('beforeend', html);
+
+            // 点击外部关闭
+            setTimeout(() => {
+                document.addEventListener('click', closeCalendarOnOutside);
+            }, 0);
+        }
+
+        /** 月份导航 */
+        async function calNavigate(delta) {
+            calCurrentDate.setMonth(calCurrentDate.getMonth() + delta);
+            const popup = document.getElementById('calPopup');
+            if (popup) popup.remove();
+            const target = calTarget;
+            const wrap = (target === 'start')
+                ? document.querySelector('#startDateInput').parentElement
+                : document.querySelector('#endDateInput').parentElement;
+            await renderCalendar(wrap);
+        }
+        /** 年份导航 */
+        async function calNavigateYear(delta) {
+            calCurrentDate.setFullYear(calCurrentDate.getFullYear() + delta);
+            const popup = document.getElementById('calPopup');
+            if (popup) popup.remove();
+            const target = calTarget;
+            const wrap = (target === 'start')
+                ? document.querySelector('#startDateInput').parentElement
+                : document.querySelector('#endDateInput').parentElement;
+            await renderCalendar(wrap);
+        }
+
+        /** 选择年份 */
+        async function calSelectYear(yearStr) {
+            calCurrentDate.setFullYear(parseInt(yearStr));
+            const popup = document.getElementById('calPopup');
+            if (popup) popup.remove();
+            const target = calTarget;
+            const wrap = (target === 'start')
+                ? document.querySelector('#startDateInput').parentElement
+                : document.querySelector('#endDateInput').parentElement;
+            await renderCalendar(wrap);
+        }
+
+        /** 选择月份 */
+        async function calSelectMonth(monthStr) {
+            calCurrentDate.setMonth(parseInt(monthStr) - 1);
+            const popup = document.getElementById('calPopup');
+            if (popup) popup.remove();
+            const target = calTarget;
+            const wrap = (target === 'start')
+                ? document.querySelector('#startDateInput').parentElement
+                : document.querySelector('#endDateInput').parentElement;
+            await renderCalendar(wrap);
+        }
+
+        /** 选择日期 */
+        function selectDate(dateStr) {
+            if (calTarget === 'start') {
+                // 如果开始日期晚于结束日期，自动调整结束日期
+                if (selectedEnd && dateStr > selectedEnd) {
+                    selectedEnd = dateStr;
+                }
+                selectedStart = dateStr;
+                document.getElementById('startDateInput').value = dateStr;
+            } else {
+                if (selectedStart && dateStr < selectedStart) {
+                    selectedStart = dateStr;
+                    document.getElementById('startDateInput').value = dateStr;
+                }
+                selectedEnd = dateStr;
+                document.getElementById('endDateInput').value = dateStr;
+            }
+            closeCalendar();
+            saveDateRange();
+        }
+
+        /** 关闭日历 */
+        function closeCalendar() {
+            const popup = document.getElementById('calPopup');
+            if (popup) popup.remove();
+        }
+
+        /** 点击外部关闭日历 */
+        function closeCalendarOnOutside(e) {
+            const popup = document.getElementById('calPopup');
+            if (popup && !popup.contains(e.target) && !e.target.classList.contains('date-input') && !e.target.classList.contains('cal-nav-btn')) {
+                closeCalendar();
+                document.removeEventListener('click', closeCalendarOnOutside);
+            }
+        }
+
+        /** 重置日期范围：清除记忆，恢复为最新数据前 2 年 */
+        function resetDateRange() {
+            try {
+                localStorage.removeItem(DATE_STORAGE_KEY);
+            } catch (e) { /* 忽略 */ }
+            const defaults = getDefaultDateRange();
+            if (!defaults.start || !defaults.end) {
+                Toast.error('重置失败', '无法获取数据范围');
+                return;
+            }
+            selectedStart = defaults.start;
+            selectedEnd = defaults.end;
+            const startInput = document.getElementById('startDateInput');
+            const endInput = document.getElementById('endDateInput');
+            if (startInput) startInput.value = selectedStart;
+            if (endInput) endInput.value = selectedEnd;
+            Toast.success('已重置日期', selectedStart + ' ~ ' + selectedEnd);
+        }
+
+        // ==================== 运行回测 ====================
+
+        async function runBacktest() {
+            if (!selectedStart || !selectedEnd) {
+                Toast.warning("请选择日期", "请先选择回测起止日期");
+                return;
+            }
+            const btn = document.getElementById('runBtn');
+            const originalText = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = '回测中...';
+
+            Overlay.show('正在运行回测...', selectedStart + ' ~ ' + selectedEnd);
+
+            try {
+                const result = await ApiClient.runBacktest(BACKTEST_ID, {
+                    shortWindow: 5,
+                    longWindow: 20,
+                    startDate: selectedStart,
+                    endDate: selectedEnd,
+                    capitalBase: selectedCapital,
+                });
+                Overlay.hide();
+                showResultModal(result, selectedStart, selectedEnd);
+                const msg = document.getElementById('statusMsg');
+                msg.className = 'msg success';
+                msg.textContent = '✓ 回测完成: ' + result.tradingDays + ' 个交易日，总收益 ' + (result.totalReturns * 100).toFixed(2) + '%';
+            } catch (err) {
+                Overlay.hide();
+                const msg = document.getElementById('statusMsg');
+                msg.className = 'msg error';
+                msg.textContent = '✗ 回测失败: ' + (err.message || '未知错误');
+                Toast.error('回测失败', err.message || '未知错误');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = originalText;
+            }
+        }
+
+        // 离开页面时若有未保存修改则提示
+        window.addEventListener('beforeunload', (e) => {
+            const editor = document.getElementById('codeEditor');
+            if (editor && editor.value !== originalCode) {
+                e.preventDefault();
+                e.returnValue = '';
+            }
+        });
+
+        init();
+    </script>
+</body>
+</html>

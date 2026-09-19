@@ -1,0 +1,151 @@
+# ==============================================================================
+# LocalStock Unified —— Git 过滤规则
+# ------------------------------------------------------------------------------
+# 原则：源码 / 文档 / 脚本 / 配置示例 / 必要二进制 —— 全部入库
+#       依赖、构建产物、运行数据库、缓存、密钥、私人知识库 —— 不入库
+#
+# 用法：
+#   - 想临时强制加入被忽略的文件：  git add -f <路径>
+#   - 想知道某文件为何被忽略：      git check-ignore -v <路径>
+# ==============================================================================
+
+
+# ---------- 1. 依赖包（体积最大，可随时 npm install 还原）----------
+node_modules/
+.pnpm-store/
+.yarn/cache/
+jspm_packages/
+
+
+# ---------- 2. 构建与打包产物 ----------
+out/
+dist/
+dist-*/
+release/
+**/release/
+*.asar
+*.asar.unpacked
+*.blockmap
+latest.yml
+*.tsbuildinfo
+# 注意：apps/desktop/build/ 是 electron-builder 的资源目录（内含 icon.png），
+#       因此这里用 build/* 只忽略其“内容产物”，并显式放行 icon.png
+build/*
+!apps/desktop/build/icon.png
+
+
+# ---------- 3. Python 缓存与虚拟环境 ----------
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+.venv/
+venv/
+env/
+ENV/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+*.pyd
+
+
+# ---------- 4. 运行数据库（体积巨大 / 可重建，不入版本库）----------
+# 权威行情库 data/market/stock_data.db 约 6.3G，聚宽侧同名副本同样不入库
+data/market/*.db
+data/market/*.db-shm
+data/market/*.db-wal
+# 聚宽服务 data/：仅排除重量级数据库与研究面板（约 6.4G），
+# 保留其中的小体积配置/清单/脚本（stock_industry.json、*_history.json、
+# sync_meta.json、sync_retry.sh、make_skill_zip.py 等约 460KB）
+services/joinquant-local/data/*.db
+services/joinquant-local/data/*.db-shm
+services/joinquant-local/data/*.db-wal
+services/joinquant-local/data/*.pkl
+services/joinquant-local/data/*.lock
+apps/desktop/data/*.db
+apps/desktop/data/*.db-shm
+apps/desktop/data/*.db-wal
+# 事务日志与临时库文件永远不入库
+*.db-shm
+*.db-wal
+# 如需彻底禁止任何 .db 入库，取消下一行注释
+# *.db
+
+
+# ---------- 5. 运行状态与快照（本机私有状态，不可移植）----------
+data/runtime/
+data/snapshots/
+
+
+# ---------- 6. 缓存、日志与临时文件 ----------
+*.log
+logs/
+*.tmp
+*.temp
+*.bak
+*.orig
+*.rej
+*.swp
+*.swo
+.cache/
+.eslintcache
+.turbo/
+.parcel-cache/
+.npmrc.local
+
+
+# ---------- 7. 测试与覆盖率产物 ----------
+test-results/
+test-artifacts/
+runs/
+coverage/
+playwright-report/
+blob-report/
+.nyc_output/
+
+
+# ---------- 8. 编辑器与操作系统杂项 ----------
+.idea/
+.vscode/
+.claude/
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+desktop.ini
+
+
+# ---------- 9. 密钥与本地私有配置（绝不能公开）----------
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.p12
+*.pfx
+
+# pa-agent 服务：虚拟环境、运行产物与含密钥的本地配置
+# （源码随桌面端分发，位于 apps/desktop/python/pa-agent；运行产物在 data/runtime/pa-agent）
+apps/desktop/python/pa-agent/.venv/
+# 可选：随程序分发的独立 Python 运行时（若手工放置，不入库）
+apps/desktop/python/pa-agent/runtime/
+apps/desktop/python/pa-agent/logs/
+apps/desktop/python/pa-agent/records/
+apps/desktop/python/pa-agent/experience/
+apps/desktop/python/pa-agent/config/settings.json
+apps/desktop/python/pa-agent/config/settings.local.json
+apps/desktop/python/pa-agent/config/secret.key
+apps/desktop/python/pa-agent/config/feishu.json
+apps/desktop/python/pa-agent/config/exception_state.json
+apps/desktop/python/pa-agent/config/tv_symbol_aliases.json
+data/runtime/pa-agent/
+
+
+# ---------- 10. 私人知识与历史证据（默认不入库）----------
+# 共约 66MB / 1377 个文件：策略库 996、项目历史 365、对话记录 16。
+# 若确认仓库为 Private 且希望一并上传，删除或注释掉以下三行即可：
+knowledge/strategy-library/
+knowledge/conversations/
+knowledge/project-history/

@@ -1,0 +1,13 @@
+
+    # ------------------------------------------------------------------
+    # baogao shengcheng
+    # ------------------------------------------------------------------
+    def generate_report(self, ic_results, decile_results, corr_matrix,
+            high_pairs, sub_period_results, output_path=None):
+        """shengcheng Markdown yinzi yanjiu baogao, xieru docs/project-docs/."""
+        if output_path is None:
+            ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+            output_path = os.path.join(REPORT_DIR, "factor_report_" + ts + ".md")
+
+        lines = []
+        w = lines.append

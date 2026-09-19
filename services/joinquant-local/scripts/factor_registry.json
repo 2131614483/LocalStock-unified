@@ -1,0 +1,203 @@
+{
+  "_meta": {
+    "description": "多因子量化因子注册表 —— 因子定义的唯一权威源。研究管线 (scripts/factor_lib.py, pandas) 与 web 引擎 (engine/factor_calc_stdlib.py, 纯标准库) 共用本定义，保证口径一致。",
+    "units": {
+      "mkt_cap_total": "千元（CSMAR 口径，实证校验），PE/PB/PS 计算时需乘 1000 转元",
+      "fs_financial": "元（财务报表科目值）"
+    },
+    "point_in_time": "基本面因子用报告期 acc_period + 固定 4 个月披露滞后近似（declare_date 92% 为空不可用）；report_type='A' 合并报表；排除非季度末异常报告期（如 2025-01-01）",
+    "no_lookahead": "动量因子 skip 最近 21 个交易日；股票池剔除 ST(trade_status!=1)/涨跌停/停牌/次新(<120交易日)/B股(2,8)/北交所(64)/退市(status=0)"
+  },
+  "factors": {
+    "mom_1m": {
+      "category": "momentum",
+      "direction": 1,
+      "data_source": "stock_daily",
+      "desc": "近20交易日累计收益",
+      "params": {
+        "window": 20
+      }
+    },
+    "mom_3m": {
+      "category": "momentum",
+      "direction": 1,
+      "data_source": "stock_daily",
+      "desc": "近60交易日累计收益",
+      "params": {
+        "window": 60
+      }
+    },
+    "mom_6m": {
+      "category": "momentum",
+      "direction": 1,
+      "data_source": "stock_daily",
+      "desc": "近120交易日累计收益",
+      "params": {
+        "window": 120
+      }
+    },
+    "mom_12m": {
+      "category": "momentum",
+      "direction": 1,
+      "data_source": "stock_daily",
+      "desc": "近250交易日累计收益",
+      "params": {
+        "window": 250
+      }
+    },
+    "mom_12m1m": {
+      "category": "momentum",
+      "direction": 1,
+      "data_source": "stock_daily",
+      "desc": "250~20日累计收益（跳过最近1月，规避短期反转）",
+      "params": {
+        "window": 250,
+        "skip": 20
+      }
+    },
+    "rev_5d": {
+      "category": "reversal",
+      "direction": -1,
+      "data_source": "stock_daily",
+      "desc": "近5日累计收益（短期反转）",
+      "params": {
+        "window": 5
+      }
+    },
+    "rev_10d": {
+      "category": "reversal",
+      "direction": -1,
+      "data_source": "stock_daily",
+      "desc": "近10日累计收益（短期反转）",
+      "params": {
+        "window": 10
+      }
+    },
+    "vol_20d": {
+      "category": "volatility",
+      "direction": -1,
+      "data_source": "stock_daily",
+      "desc": "20日日收益率标准差，年化×√252",
+      "params": {
+        "window": 20
+      }
+    },
+    "vol_60d": {
+      "category": "volatility",
+      "direction": -1,
+      "data_source": "stock_daily",
+      "desc": "60日日收益率标准差，年化×√252",
+      "params": {
+        "window": 60
+      }
+    },
+    "liq_20d": {
+      "category": "liquidity",
+      "direction": -1,
+      "data_source": "stock_daily",
+      "desc": "20日均成交额取 ln",
+      "params": {
+        "window": 20
+      }
+    },
+    "turnover_20d": {
+      "category": "liquidity",
+      "direction": -1,
+      "data_source": "stock_daily",
+      "desc": "20日均成交额 / 推算流通市值",
+      "params": {
+        "window": 20
+      }
+    },
+    "rsi_14": {
+      "category": "technical",
+      "direction": 1,
+      "data_source": "stock_daily",
+      "desc": "14日 RSI",
+      "params": {
+        "window": 14
+      }
+    },
+    "ma_dev_20": {
+      "category": "technical",
+      "direction": 1,
+      "data_source": "stock_daily",
+      "desc": "close/MA20 - 1（均线偏离）",
+      "params": {
+        "window": 20
+      }
+    },
+    "ln_cap": {
+      "category": "size",
+      "direction": -1,
+      "data_source": "stock_daily",
+      "desc": "ln(推算总市值, 元)"
+    },
+    "ep_ttm": {
+      "category": "value",
+      "direction": 1,
+      "data_source": "fs_comins+price",
+      "desc": "TTM归母净利润 / 总市值(元)（盈余收益率）"
+    },
+    "ep_annual": {
+      "category": "value",
+      "direction": 1,
+      "data_source": "fs_comins+price",
+      "desc": "最新年报归母净利润 / 总市值(元)"
+    },
+    "bp": {
+      "category": "value",
+      "direction": 1,
+      "data_source": "fs_combas+price",
+      "desc": "净资产(合并A003000000) / 总市值(元)（账面市值比）"
+    },
+    "sp_ttm": {
+      "category": "value",
+      "direction": 1,
+      "data_source": "fs_comins+price",
+      "desc": "TTM营业总收入 / 总市值(元)"
+    },
+    "roe_ttm": {
+      "category": "quality",
+      "direction": 1,
+      "data_source": "fs_comins+fs_combas",
+      "desc": "TTM净利润 / 平均净资产"
+    },
+    "roe_annual": {
+      "category": "quality",
+      "direction": 1,
+      "data_source": "fs_comins+fs_combas",
+      "desc": "最新年报净利润 / 净资产"
+    },
+    "gross_margin": {
+      "category": "quality",
+      "direction": 1,
+      "data_source": "fs_comins",
+      "desc": "(收入-营业总成本)/收入"
+    },
+    "debt_ratio": {
+      "category": "quality",
+      "direction": -1,
+      "data_source": "fs_combas",
+      "desc": "负债合计/资产总计"
+    },
+    "op_cf_ratio": {
+      "category": "quality",
+      "direction": 1,
+      "data_source": "fs_comscfd+fs_comins",
+      "desc": "经营现金流净额/净利润"
+    },
+    "rev_growth_yr": {
+      "category": "growth",
+      "direction": 1,
+      "data_source": "fs_comins",
+      "desc": "最新年报营业总收入同比增速"
+    },
+    "profit_growth_yr": {
+      "category": "growth",
+      "direction": 1,
+      "data_source": "fs_comins",
+      "desc": "最新年报净利润同比增速"
+    }
+  }
+}

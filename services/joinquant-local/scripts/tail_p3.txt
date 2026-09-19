@@ -1,0 +1,33 @@
+
+    # ------------------------------------------------------------------
+    # fenxi: fen shichang zhuangtai jianyan
+    # ------------------------------------------------------------------
+    def sub_period_analysis(self, min_codes=30):
+        """fen si ge shichang zhuangtai zuo IC fenxi, jianyan yinzi zai butong huanjing xia de wendingxing."""
+        df = self.panel.dropna(subset=["forward_ret"])
+        periods = df["period"].unique()
+        all_results = {}
+        for period in sorted(periods):
+            sub = df[df["period"] == period]
+            results = {}
+            for f in self.factors:
+                rows = []
+                for d, g in sub.groupby("trade_date"):
+                    v = g[[f, "forward_ret"]].dropna()
+                    if len(v) >= min_codes:
+                        ic = v[f].corr(v["forward_ret"], method="spearman")
+                        rows.append((d, ic))
+            if not rows:
+                continue
+            s = pd.DataFrame(rows, columns=["date", "IC"])
+            ic_mean = s["IC"].mean()
+            ic_std = s["IC"].std()
+            results[f] = {
+                "IC_mean": float(ic_mean),
+                "IC_std": float(ic_std),
+                "IC_IR": float(ic_mean / ic_std) if ic_std and ic_std > 0 else None,
+                "IC_gt0": float((s["IC"] > 0).mean()),
+                "n": len(s),
+            }
+        all_results[period] = results
+    return all_results

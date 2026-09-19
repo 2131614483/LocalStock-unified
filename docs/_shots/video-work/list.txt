@@ -1,0 +1,17 @@
+file 'D:/pythonpro/LocalStock-unified/docs/_shots/video-work/norm_0.png'
+duration 3
+file 'D:/pythonpro/LocalStock-unified/docs/_shots/video-work/norm_1.png'
+duration 2
+file 'D:/pythonpro/LocalStock-unified/docs/_shots/video-work/norm_2.png'
+duration 4
+file 'D:/pythonpro/LocalStock-unified/docs/_shots/video-work/norm_3.png'
+duration 3
+file 'D:/pythonpro/LocalStock-unified/docs/_shots/video-work/norm_4.png'
+duration 2
+file 'D:/pythonpro/LocalStock-unified/docs/_shots/video-work/norm_5.png'
+duration 3
+file 'D:/pythonpro/LocalStock-unified/docs/_shots/video-work/norm_6.png'
+duration 3
+file 'D:/pythonpro/LocalStock-unified/docs/_shots/video-work/norm_7.png'
+duration 5
+file 'D:/pythonpro/LocalStock-unified/docs/_shots/video-work/norm_7.png'

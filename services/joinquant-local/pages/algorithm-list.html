@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>量化回测平台 - 策略列表</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📈</text></svg>">
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <script src="../assets/js/api.js"></script>
+</head>
+<body>
+    <!-- 顶部导航 -->
+    <header class="navbar">
+        <div class="nav-container">
+            <a href="/pages/algorithm-list.html" class="logo">量化回测平台</a>
+            <nav class="nav-links">
+                <a href="/pages/algorithm-list.html" class="active">策略列表</a>
+                <a href="/pages/api-doc.html">API文档</a>
+            </nav>
+            <div class="nav-user"><span class="user-avatar">👤</span></div>
+        </div>
+    </header>
+
+    <div class="main-content container">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin:20px 0">
+            <h2>策略列表</h2>
+            <button class="btn btn-primary" onclick="createStrategy()">+ 新建策略</button>
+        </div>
+
+        <table class="data-table" style="width:100%">
+            <thead>
+                <tr>
+                    <th>策略名称</th>
+                    <th>描述</th>
+                    <th>最新回测状态</th>
+                    <th>最新收益</th>
+                    <th style="width:180px">操作</th>
+                </tr>
+            </thead>
+            <tbody id="strategyBody">
+                <tr><td colspan="5" style="text-align:center;color:#999">加载中...</td></tr>
+            </tbody>
+        </table>
+    </div>
+    <script>
+    async function loadStrategies() {
+        const body = document.getElementById("strategyBody")
+        try {
+            const list = await ApiClient.getAlgorithmList()
+            if (!list || !list.length) {
+                body.innerHTML = "<tr><td colspan=5 style=text-align:center;color:#999>暂无策略，点击右上角新建</td></tr>"
+                return
+            }
+            body.innerHTML = ""
+            for (const a of list) {
+                const btId = a.backtest_id || ""
+                const ret = (a.total_returns != null) ? (a.total_returns * 100).toFixed(2) + "%" : "--"
+                const st = a.backtest_status || "--"
+                const btns = btId ? ("<a class=\"btn btn-sm btn-primary\" href=\"/index.html?backtest_id=" + btId + "\">查看</a> <a class=\"btn btn-sm btn-info\" href=\"/pages/edit.html?id=" + btId + "\">编辑</a>") : ""
+                body.insertAdjacentHTML("beforeend", "<tr><td>" + a.name + "</td><td>" + (a.description || "") + "</td><td>" + st + "</td><td>" + ret + "</td><td>" + btns + "</td></tr>")
+            }
+        } catch (err) {
+            body.innerHTML = "<tr><td colspan=5 style=text-align:center;color:#e74c3c>加载失败: " + err.message + "</td></tr>"
+        }
+    }
+
+    async function createStrategy() {
+        const name = prompt("输入新策略名称", "新策略")
+        if (!name) return
+        try {
+            const data = await ApiClient.createAlgorithm(name, "")
+            location.href = "/pages/edit.html?id=" + data.backtest_id
+        } catch (err) {
+            alert("创建失败: " + err.message)
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", loadStrategies)
+    </script>
+</body>
+</html>

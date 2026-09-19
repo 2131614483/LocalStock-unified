@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "browser-use": {
+      "command": "D:\\pythonpro\\browser-use-main\\.venv\\Scripts\\python.exe",
+      "args": [
+        "D:\\pythonpro\\browser-use-main\\browser_use_mcp.py"
+      ],
+      "disabled": false
+    }
+  }
+}

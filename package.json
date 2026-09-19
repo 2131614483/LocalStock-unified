@@ -1,0 +1,12 @@
+{
+  "name": "localstock-unified-workspace",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "install:all": "npm --prefix apps/desktop ci && npm --prefix services/joinquant-local ci",
+    "typecheck": "npm --prefix apps/desktop run typecheck",
+    "test": "npm --prefix apps/desktop test",
+    "build:desktop": "npm --prefix apps/desktop run build:win",
+    "verify:workspace": "powershell -ExecutionPolicy Bypass -File tools/verify-workspace.ps1"
+  }
+}

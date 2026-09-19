@@ -1,0 +1,17 @@
+
+    # ------------------------------------------------------------------
+    # fenxi: yinzi xiangguanxing
+    # ------------------------------------------------------------------
+    def correlation_analysis(self, min_codes=30):
+        """jisuan yinzi jian jiemian Spearman zhi xiangguan (meiyue jisuan hou qu junzhi)."""
+        df = self.panel
+        n = len(self.factors)
+        cors = pd.DataFrame(np.eye(n), index=self.factors, columns=self.factors, dtype=float)
+        for i, f1 in enumerate(self.factors):
+            for j, f2 in enumerate(self.factors):
+                if i >= j:
+                    continue
+                vals = []
+                for d, g in df.groupby("trade_date"):
+                    v = g[[f1, f2]].dropna()
+                    if len(v) >= min_codes:
