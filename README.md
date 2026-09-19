@@ -1,8 +1,4 @@
 # LocalStock Unified
-
-<img src="docs/_shots/desktop-watchlist.png" width="900">
-
-> 本地量化工作台：Electron 桌面端 + 聚宽兼容回测服务 + 统一行情库 + 价格行为 AI，全部跑在本地，不依赖云端。
 > LocalStock Unified，一个完全本地运行的 A 股行情、量化回测与 AI 分析桌面工具。
 三大组件：Electron 桌面端、聚宽兼容回测服务、价格行为 AI，共用一个本地 SQLite 行情库。
 覆盖全市场 5973 只股票，日线从 1991 年 6 月至今，共约 1884 万行。
@@ -18,6 +14,10 @@ K 线从 1 分钟到季线全覆盖：1、5、15、30、60、120 分钟，再到
 模型后端支持 DeepSeek、OpenCode、Anthropic、Ollama 本地，密钥只存运行态，不入库。
 行情走东财、腾讯、新浪多源冗余，支持独立监盘窗、置顶大屏、任意视图拆浮窗。
 全部数据本地存储，不登录、不联网也能用，数据不出本机。这就是 LocalStock Unified。
+<img src="docs/_shots/desktop-watchlist.png" width="900">
+
+> 本地量化工作台：Electron 桌面端 + 聚宽兼容回测服务 + 统一行情库 + 价格行为 AI，全部跑在本地，不依赖云端。
+
 
 ## 项目定位
 
