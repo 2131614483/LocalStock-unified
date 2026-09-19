@@ -51,7 +51,8 @@ powershell -ExecutionPolicy Bypass -File .\tools\start-desktop.ps1
 ## 界面预览
 
 ### 行情浏览
-
+<img width="2560" height="1390" alt="image" src="https://github.com/user-attachments/assets/c370fe35-3623-49f8-8681-b76665443ab5" />
+内置回测界面
 <img src="docs/_shots/desktop-watchlist.png" width="900">
 *自选股主界面：红涨绿跌，实时刷新*
 
