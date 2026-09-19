@@ -14,7 +14,7 @@ K 线从 1 分钟到季线全覆盖：1、5、15、30、60、120 分钟，再到
 模型后端支持云端、Ollama 本地，密钥只存运行态，不入库。
 行情走东财、腾讯、新浪多源，支持独立监盘窗、置顶大屏、任意视图拆浮窗。
 全部数据本地存储，不登录、不联网也能用，数据不出本机。
-本项目参考jukuan
+本项目量化代码仅用于学术研究，不构成任何投资建议。
 
 https://github.com/user-attachments/assets/cddf24f3-d675-4848-9ec9-a1b8487358f4
 
@@ -136,7 +136,8 @@ powershell -ExecutionPolicy Bypass -File .\tools\start-desktop.ps1
 4. 本项目对数据接口进行了更换
 
 ## 第三方组件声明
-本项目通过网络API调用 PA Agent
+本项目通过网络API调用 PA Agent,因开源协议问题，自用需自行下载。
+https://github.com/rosemarycox5334-debug/PA_Agent?tab=License-1-ov-file
 - 项目名称：PA Agent
 - 版权：Copyright (C) 2026 PA Agent Contributors
 - 许可证：GNU Affero General Public License v3.0 (AGPL-3.0-or-later)
