@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useBacktest } from '../../store/backtest'
 import { useApp } from '../../store/app'
 import DataDownloadPanel from './DataDownloadPanel'
@@ -22,6 +22,7 @@ export default function BacktestPage() {
   const backtestTarget = useApp((s) => s.backtestTarget)
   const setBacktestTarget = useApp((s) => s.setBacktestTarget)
   const loadBacktestTarget = useApp((s) => s.loadBacktestTarget)
+  const [targetMessage, setTargetMessage] = useState('')
 
   // 订阅下载进度推送
   useEffect(() => {
@@ -53,6 +54,30 @@ export default function BacktestPage() {
     }
   }, [backtestTarget, saveCode, setCode, workspaceReady])
 
+  useEffect(() => {
+    setTargetMessage('')
+  }, [backtestTarget])
+
+  const replaceCurrentStrategyStock = (): void => {
+    if (!backtestTarget) return
+    const stock = secidToStrategyCode(backtestTarget.secid)
+    const current = useBacktest.getState().code
+    if (!/g\.stocks\s*=/.test(current)) {
+      setTargetMessage('当前策略没有 g.stocks 股票池，无法自动替换。')
+      return
+    }
+    const next = current.replace(/g\.stocks\s*=\s*\[[^\]]*\]/, `g.stocks = ['${stock}']`)
+    if (next === current) {
+      setTargetMessage('当前策略已使用该目标股票。')
+      return
+    }
+    setCode(next)
+    void saveCode(next).then(
+      () => setTargetMessage(`已替换为 ${backtestTarget.name}（${stock}）。`),
+      () => setTargetMessage('股票已替换，但自动保存失败；请稍后重试。')
+    )
+  }
+
   return (
     <div className="backtest-page">
       {backtestTarget && (
@@ -60,10 +85,14 @@ export default function BacktestPage() {
           <span className="table-title">
             🎯 回测目标：{backtestTarget.name}（{backtestTarget.secid}）
           </span>
-          <span className="editor-hint">已自动填入策略股票池</span>
+          <span className="editor-hint">可一键替换策略股票池</span>
+          <button className="btn primary" onClick={replaceCurrentStrategyStock}>
+            替换当前策略股票
+          </button>
           <button className="btn" onClick={() => setBacktestTarget(null)}>
             清除目标
           </button>
+          {targetMessage && <span className="editor-hint">{targetMessage}</span>}
         </div>
       )}
       <DataDownloadPanel />

@@ -106,8 +106,8 @@ export function getDataStatus(): BacktestDataStatus {
     let metaMap: Record<string, string> = {}
     try {
       const meta = conn
-        .prepare('SELECT key, value FROM sync_meta WHERE key IN (?, ?)')
-        .all('db_version', 'last_full_sync') as Array<{ key: string; value: string }>
+        .prepare('SELECT key, value FROM sync_meta WHERE key IN (?, ?, ?)')
+        .all('db_version', 'last_full_sync', 'last_incremental_sync') as Array<{ key: string; value: string }>
       for (const m of meta) metaMap[m.key] = m.value
     } catch {
       // 忽略：缺 sync_meta 表时返回存在但无版本/同步时间
@@ -120,7 +120,7 @@ export function getDataStatus(): BacktestDataStatus {
       dateFrom: range.f,
       dateTo: range.t,
       dbVersion: metaMap['db_version'],
-      lastSync: metaMap['last_full_sync']
+      lastSync: metaMap['last_incremental_sync'] || metaMap['last_full_sync']
     }
   } catch (err) {
     return { exists: false, error: String(err) }
@@ -240,6 +240,47 @@ export function registerBacktestIpc(getWindow: () => Electron.BrowserWindow | nu
         type: 'error',
         message: `无法启动下载：${err.message}（请确认已安装 Python 和 baostock）`
       })
+    })
+    return { started: true }
+  })
+
+  // 常规维护任务：保留“全量下载”给首次建库；日常点击只更新最新数据，
+  // 并修复近期交易日缺口、异常 OHLC 与同步状态。
+  ipcMain.handle('backtest:syncData', () => {
+    if (downloading) return { started: false, reason: 'already-running' }
+    const script = join(pythonDir(), 'scripts', 'sync_incremental_data.py')
+    if (!existsSync(script)) return { started: false, reason: `脚本不存在: ${script}` }
+    const win = getWindow()
+    const sendProgress = (msg: DownloadProgressMsg): void => {
+      if (win && !win.isDestroyed()) win.webContents.send('backtest:downloadProgress', msg)
+    }
+    const child = spawn(pythonExe(), [script, '--db', stockDataPath()], {
+      windowsHide: true,
+      env: { ...process.env, PYTHONUTF8: '1' }
+    })
+    downloading = child
+    let buf = ''
+    child.stdout.on('data', (chunk: Buffer) => {
+      buf += chunk.toString('utf-8')
+      const lines = buf.split('\n')
+      buf = lines.pop() ?? ''
+      for (const line of lines) {
+        const text = line.trim()
+        if (!text) continue
+        try {
+          sendProgress(JSON.parse(text) as DownloadProgressMsg)
+        } catch {
+          // 第三方数据源的非 JSON 输出不影响本次任务。
+        }
+      }
+    })
+    child.on('close', (code) => {
+      downloading = null
+      sendProgress({ type: 'exit', code: code ?? -1 })
+    })
+    child.on('error', (err) => {
+      downloading = null
+      sendProgress({ type: 'error', message: `无法启动同步：${err.message}` })
     })
     return { started: true }
   })

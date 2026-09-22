@@ -1,5 +1,5 @@
 import { BrowserWindow, ipcMain } from 'electron'
-import { searchStocks } from './market/eastmoney'
+import { searchLocalSymbols } from './market/market-list-local'
 import { getOrderBook } from './market/tencent'
 import { getQuotesSafe } from './market/quotes'
 import { getLocalMarketListAsync } from './market/sqlite-worker-client'
@@ -7,7 +7,7 @@ import { resolveKline } from './market/kline-resolver'
 import { resolveMinute } from './market/minute-resolver'
 import { setDbPath } from './market/db-path'
 import { stockDataPath } from './backtest'
-import type { MarketListParams } from '../shared/types'
+import type { MarketListParams, SearchScope } from '../shared/types'
 import {
   listWatchlist,
   addWatchlist,
@@ -97,7 +97,9 @@ export function registerIpc(getWindow: () => Electron.BrowserWindow | null): voi
     resolveMinute(secid, days)
   )
   auditedHandle('market:getOrderBook', (_e, secid: string) => getOrderBook(secid))
-  ipcMain.handle('market:search', (_e, keyword: string) => searchStocks(keyword))
+  auditedHandle('market:search', (_e, keyword: string, scopes?: SearchScope[]) =>
+    searchLocalSymbols(keyword, scopes)
+  )
   ipcMain.handle('market:subscribe', (e, secids: string[], interval: number) => {
     subscribeMarket(e, secids, interval)
     return { ok: true }

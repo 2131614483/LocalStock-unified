@@ -74,7 +74,7 @@ const api: WindowApi = {
     getKline: (secid, klt, fqt) => ipcRenderer.invoke('market:getKline', secid, klt, fqt),
     getMinute: (secid, days) => ipcRenderer.invoke('market:getMinute', secid, days),
     getOrderBook: (secid) => ipcRenderer.invoke('market:getOrderBook', secid),
-    search: (keyword) => ipcRenderer.invoke('market:search', keyword),
+    search: (keyword, scopes) => ipcRenderer.invoke('market:search', keyword, scopes),
     subscribe: (secids, interval) => ipcRenderer.invoke('market:subscribe', secids, interval),
     onQuotes: (cb) => {
       const listener = (_e: Electron.IpcRendererEvent, quotes: Parameters<typeof cb>[0]) =>
@@ -154,6 +154,7 @@ const api: WindowApi = {
   backtest: {
     getDataStatus: () => ipcRenderer.invoke('backtest:getDataStatus'),
     downloadData: () => ipcRenderer.invoke('backtest:downloadData'),
+    syncData: () => ipcRenderer.invoke('backtest:syncData'),
     onDownloadProgress: (cb) => {
       const listener = (_e: Electron.IpcRendererEvent, msg: Parameters<typeof cb>[0]) =>
         cb(msg)

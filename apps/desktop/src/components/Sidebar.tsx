@@ -81,10 +81,16 @@ export default function Sidebar() {
         onClick={() => openMarket('a_share')}
       />
       <SideItem
-        active={view.type === 'market' && marketCategory === 'fund'}
+        active={view.type === 'market' && marketCategory === 'fund_t0'}
         icon={<Landmark size={14} />}
-        label="基金 / ETF"
-        onClick={() => openMarket('fund')}
+        label="基金 T+0"
+        onClick={() => openMarket('fund_t0')}
+      />
+      <SideItem
+        active={view.type === 'market' && marketCategory === 'fund_t1'}
+        icon={<Landmark size={14} />}
+        label="基金 T+1"
+        onClick={() => openMarket('fund_t1')}
       />
       <SideItem
         active={view.type === 'market' && marketCategory === 'index'}

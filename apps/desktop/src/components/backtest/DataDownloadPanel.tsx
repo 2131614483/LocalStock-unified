@@ -6,6 +6,7 @@ export default function DataDownloadPanel() {
   const downloading = useBacktest((s) => s.downloading)
   const downloadMsg = useBacktest((s) => s.downloadMsg)
   const startDownload = useBacktest((s) => s.startDownload)
+  const startSync = useBacktest((s) => s.startSync)
 
   const percent = useMemo(() => {
     if (downloadMsg?.type === 'progress' && downloadMsg.total > 0) {
@@ -30,9 +31,27 @@ export default function DataDownloadPanel() {
           <span className="data-bar-item">同步于 {dataStatus.lastSync}</span>
         )}
         <span className="data-bar-spacer" />
-        <button className="btn" onClick={() => void startDownload()}>
-          重新下载
-        </button>
+        {!downloading ? (
+          <>
+            <button className="btn primary" onClick={() => void startSync()}>
+              增量同步并校验修复
+            </button>
+            <button className="btn" onClick={() => void startDownload()}>
+              全量补齐
+            </button>
+          </>
+        ) : (
+          <div className="download-progress">
+            <div className="progress-track">
+              <div className="progress-fill" style={{ width: `${Math.max(3, percent)}%` }} />
+            </div>
+            <span className="progress-text">
+              {downloadMsg?.type === 'progress'
+                ? `${downloadMsg.done}/${downloadMsg.total} 只 · ${downloadMsg.rows.toLocaleString()} 行`
+                : downloadMsg?.type === 'log' ? downloadMsg.message : '正在准备同步…'}
+            </span>
+          </div>
+        )}
       </div>
     )
   }

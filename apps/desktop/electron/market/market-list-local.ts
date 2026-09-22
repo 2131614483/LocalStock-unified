@@ -1,6 +1,6 @@
 import Database from 'better-sqlite3'
 import { existsSync } from 'fs'
-import type { MarketCategory, MarketListParams, MarketListResult, Quote } from '../../shared/types'
+import type { MarketCategory, MarketListParams, MarketListResult, Quote, SearchResult, SearchScope } from '../../shared/types'
 import { getDbPath } from './db-path'
 
 /** 沪深A股列表本地化：从 stock_data.db 生成（每只股票最新日线），不依赖东财接口 */
@@ -22,6 +22,77 @@ function getConn(): Database.Database | null {
 function secidOf(code: string): string {
   // 上海股票、ETF 和 B 股分别常以 6/5/9 开头；其余 A 股、ETF、B 股归深市。
   return (/^[569]/.test(code) ? '1' : '0') + '.' + code
+}
+
+/** 本地全局搜索：股票、基金目录和指数均来自同一份行情库，不依赖网络。 */
+export function searchLocalSymbols(keyword: string, scopes: SearchScope[] = ['stock', 'fund', 'index']): SearchResult[] {
+  const c = getConn()
+  const needle = keyword.trim()
+  if (!c || !needle || scopes.length === 0) return []
+  const like = `%${needle}%`
+  const exact = needle
+  const result: SearchResult[] = []
+  if (scopes.includes('stock')) {
+    try {
+      const rows = c.prepare(
+        `SELECT stock_code, name, market_name FROM stocks
+         WHERE status=1 AND (stock_code LIKE ? OR name LIKE ?)
+         ORDER BY CASE WHEN stock_code=? THEN 0 WHEN name=? THEN 1 ELSE 2 END, stock_code
+         LIMIT 30`
+      ).all(like, like, exact, exact) as Array<{ stock_code: string; name: string; market_name: string | null }>
+      result.push(...rows.map((row) => ({
+        code: row.stock_code, name: row.name?.trim() || row.stock_code, pinyin: '',
+        secid: secidOf(row.stock_code), type: row.market_name?.trim() || '股票'
+      })))
+    } catch {
+      // 旧库的 stocks 字段不足时仍让基金/指数搜索继续。
+    }
+  }
+  if (scopes.includes('fund') && hasFundInfo(c)) {
+    try {
+      const rows = c.prepare(
+        `SELECT fund_code, name, settlement FROM fund_info
+         WHERE fund_code LIKE ? OR name LIKE ?
+         ORDER BY CASE WHEN fund_code=? THEN 0 WHEN name=? THEN 1 ELSE 2 END, fund_code
+         LIMIT 30`
+      ).all(like, like, exact, exact) as Array<{ fund_code: string; name: string; settlement: string | null }>
+      result.push(...rows.map((row) => ({
+        code: row.fund_code, name: row.name?.trim() || `基金 ${row.fund_code}`, pinyin: '',
+        secid: secidOf(row.fund_code), type: row.settlement === 't0' ? '基金 T+0' : row.settlement === 't1' ? '基金 T+1' : '基金'
+      })))
+    } catch {
+      // 兼容没有 settlement 列的旧 fund_info 表。
+      try {
+        const rows = c.prepare(
+          `SELECT fund_code, name FROM fund_info WHERE fund_code LIKE ? OR name LIKE ? ORDER BY fund_code LIMIT 30`
+        ).all(like, like) as Array<{ fund_code: string; name: string }>
+        result.push(...rows.map((row) => ({
+          code: row.fund_code, name: row.name?.trim() || `基金 ${row.fund_code}`, pinyin: '',
+          secid: secidOf(row.fund_code), type: '基金'
+        })))
+      } catch {
+        // 无法读取旧基金表时返回已有范围的结果。
+      }
+    }
+  }
+  if (scopes.includes('index')) {
+    try {
+      const rows = c.prepare(
+        `SELECT DISTINCT index_code FROM index_daily WHERE index_code LIKE ? ORDER BY index_code LIMIT 30`
+      ).all(like) as Array<{ index_code: string }>
+      const known = Object.keys(INDEX_NAMES)
+        .filter((code) => code.includes(needle) || INDEX_NAMES[code].includes(needle))
+        .map((index_code) => ({ index_code }))
+      const codes = [...new Set([...rows, ...known].map((row) => row.index_code))].slice(0, 30)
+      result.push(...codes.map((code) => ({
+        code, name: INDEX_NAMES[code] ?? `指数 ${code}`, pinyin: '',
+        secid: code.startsWith('399') ? `0.${code}` : `1.${code}`, type: '指数'
+      })))
+    } catch {
+      // index_daily 不存在时不影响其他搜索范围。
+    }
+  }
+  return result.slice(0, 60)
 }
 
 /** 按 secid 从本地库构建最新快照，供在线源缺股/离线时兜底。 */
@@ -170,30 +241,31 @@ function hasFundInfo(c: Database.Database): boolean {
   }
 }
 
-function localFundRows(c: Database.Database): Quote[] {
-  const fundInfoJoin = hasFundInfo(c) ? 'LEFT JOIN fund_info i ON i.fund_code=d.fund_code' : ''
-  const fundNameField = fundInfoJoin ? 'i.name AS name,' : 'NULL AS name,'
+function localFundRows(c: Database.Database, settlement?: 't0' | 't1'): Quote[] {
+  if (!hasFundInfo(c)) return []
+  const filter = settlement ? 'WHERE i.settlement=?' : ''
   const rows = c.prepare(
-    `SELECT d.fund_code, ${fundNameField} d.trade_date, d.open, d.high, d.low, d.close, d.volume, d.amount,
+    `SELECT i.fund_code, i.name, d.trade_date, d.open, d.high, d.low, d.close, d.volume, d.amount,
             (SELECT p.close FROM fund_daily p
              WHERE p.fund_code=d.fund_code AND p.trade_date < d.trade_date
              ORDER BY p.trade_date DESC LIMIT 1) AS pre_close
-     FROM fund_daily d
-     ${fundInfoJoin}
-     JOIN (SELECT fund_code, MAX(trade_date) AS trade_date FROM fund_daily GROUP BY fund_code) last
-       ON last.fund_code=d.fund_code AND last.trade_date=d.trade_date`
-  ).all() as Array<{
-    fund_code: string; name: string | null; trade_date: string; open: number; high: number; low: number; close: number
+     FROM fund_info i
+     LEFT JOIN fund_daily d ON d.fund_code=i.fund_code AND d.trade_date=(
+       SELECT MAX(last.trade_date) FROM fund_daily last WHERE last.fund_code=i.fund_code
+     ) ${filter}`
+  ).all(...(settlement ? [settlement] : [])) as Array<{
+    fund_code: string; name: string; trade_date: string | null; open: number | null; high: number | null; low: number | null; close: number | null
     volume: number; amount: number; pre_close: number | null
   }>
   return rows.map((r) => {
-    const pre = r.pre_close ?? r.close ?? 0
+    const close = r.close ?? 0
+    const pre = r.pre_close ?? close
     return {
       secid: secidOf(r.fund_code), code: r.fund_code, name: r.name?.trim() || `基金 ${r.fund_code}`,
-      price: r.close ?? 0, change: pre > 0 ? Number((r.close - pre).toFixed(3)) : 0,
-      changePercent: pre > 0 ? Number((((r.close - pre) / pre) * 100).toFixed(2)) : 0,
+      price: close, change: pre > 0 ? Number((close - pre).toFixed(3)) : 0,
+      changePercent: pre > 0 ? Number((((close - pre) / pre) * 100).toFixed(2)) : 0,
       open: r.open ?? 0, high: r.high ?? 0, low: r.low ?? 0, preClose: pre,
-      volume: r.volume ?? 0, amount: r.amount ?? 0, isIndex: false, time: r.trade_date
+      volume: r.volume ?? 0, amount: r.amount ?? 0, isIndex: false, time: r.trade_date ?? undefined
     }
   })
 }
@@ -228,8 +300,10 @@ export function getLocalMarketList(params: MarketListParams): MarketListResult |
 
   let cached = listCache.get(category)
   if (!cached || Date.now() - cached.ts > CACHE_TTL_MS) {
-    if (category === 'fund' || category === 'index') {
-      const all = category === 'fund' ? localFundRows(c) : localIndexRows(c)
+    if (category === 'fund' || category === 'fund_t0' || category === 'fund_t1' || category === 'index') {
+      const all = category === 'index'
+        ? localIndexRows(c)
+        : localFundRows(c, category === 'fund_t0' ? 't0' : category === 'fund_t1' ? 't1' : undefined)
       cached = { ts: Date.now(), all }
       listCache.set(category, cached)
     } else {

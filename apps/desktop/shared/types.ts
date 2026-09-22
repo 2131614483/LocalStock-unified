@@ -108,6 +108,9 @@ export interface SearchResult {
   type: string // "沪A" / "深A" 等
 }
 
+/** 全局搜索可勾选的本地数据范围。 */
+export type SearchScope = 'stock' | 'fund' | 'index'
+
 export interface WatchItem {
   secid: string
   code: string
@@ -147,6 +150,8 @@ export type MarketCategory =
   | 'beijing'
   | 'b_share'
   | 'fund'
+  | 'fund_t0'
+  | 'fund_t1'
   | 'index'
 
 export interface MarketListResult {
@@ -185,7 +190,7 @@ export interface WindowApi {  market: {
     getKline(secid: string, klt: number, fqt: number): Promise<KlineResult>
     getMinute(secid: string, days?: number): Promise<MinuteResult>
     getOrderBook(secid: string): Promise<OrderBook | null>
-    search(keyword: string): Promise<SearchResult[]>
+    search(keyword: string, scopes?: SearchScope[]): Promise<SearchResult[]>
     subscribe(secids: string[], interval: number): Promise<{ ok: boolean }>
     onQuotes(cb: (quotes: Quote[]) => void): () => void
   }
@@ -252,6 +257,8 @@ export interface WindowApi {  market: {
   backtest: {
     getDataStatus(): Promise<BacktestDataStatus>
     downloadData(): Promise<{ started: boolean; reason?: string }>
+    /** 更新最新数据，并检查/修复近期缺失或异常的本地 K 线。 */
+    syncData(): Promise<{ started: boolean; reason?: string }>
     onDownloadProgress(cb: (msg: DownloadProgressMsg) => void): () => void
     run(args: BacktestRunArgs): Promise<BacktestResult>
     listTemplates(): Promise<BacktestTemplate[]>

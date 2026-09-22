@@ -216,12 +216,17 @@ body {
 
 .search-wrap {
   position: relative;
-  width: 300px;
+  width: 490px;
   margin: 8px 12px;
   flex-shrink: 0;
 }
+.search-main {
+  display: flex;
+  align-items: center;
+  height: 100%;
+}
 .search-input {
-  width: 100%;
+  width: 236px;
   height: 100%;
   padding: 0 10px 0 32px;
   background: var(--bg-panel-2);
@@ -243,6 +248,28 @@ body {
   color: var(--text-faint);
   font-size: 13px;
   pointer-events: none;
+}
+.search-scopes {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 10px;
+  color: var(--text-dim);
+  font-size: 12px;
+  white-space: nowrap;
+}
+.search-scope {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  cursor: pointer;
+}
+.search-scope input {
+  width: 13px;
+  height: 13px;
+  margin: 0;
+  accent-color: var(--accent);
 }
 .search-dropdown {
   position: absolute;

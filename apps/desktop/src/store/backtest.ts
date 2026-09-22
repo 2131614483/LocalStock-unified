@@ -7,7 +7,8 @@ import type {
 
 const now = new Date()
 const endDateDefault = now.toISOString().slice(0, 10)
-const startDateDefault = new Date(now.getFullYear() - 3, now.getMonth(), now.getDate())
+// 新建回测默认取近一年；已有工作区日期由持久化设置恢复，不覆盖用户选择。
+const startDateDefault = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate())
   .toISOString()
   .slice(0, 10)
 
@@ -34,6 +35,7 @@ interface BacktestState {
   loadDataStatus(): Promise<void>
   loadTemplates(): Promise<void>
   startDownload(): Promise<void>
+  startSync(): Promise<void>
   setDownloadProgress(msg: DownloadProgressMsg): void
   applyTemplate(name: string, code: string): void
   setCode(code: string): void
@@ -123,6 +125,18 @@ export const useBacktest = create<BacktestState>((set, get) => ({
       const res = await window.api.backtest.downloadData()
       if (!res.started) {
         set({ downloading: false, error: `下载未启动：${res.reason ?? ''}` })
+      }
+    } catch (err) {
+      set({ downloading: false, error: String(err) })
+    }
+  },
+
+  startSync: async () => {
+    set({ downloading: true, downloadMsg: null, error: null })
+    try {
+      const res = await window.api.backtest.syncData()
+      if (!res.started) {
+        set({ downloading: false, error: `同步未启动：${res.reason ?? ''}` })
       }
     } catch (err) {
       set({ downloading: false, error: String(err) })
