@@ -134,7 +134,20 @@ export interface MarketListParams {
   pz: number // 每页数量
   fid: string // 排序字段，如 f3 涨跌幅 f6 成交额 f12 代码
   order: 'asc' | 'desc'
+  /** 仅从本地行情库读取的证券类别；省略时为沪深 A 股。 */
+  category?: MarketCategory
 }
+
+export type MarketCategory =
+  | 'a_share'
+  | 'shanghai'
+  | 'shenzhen'
+  | 'chinext'
+  | 'star'
+  | 'beijing'
+  | 'b_share'
+  | 'fund'
+  | 'index'
 
 export interface MarketListResult {
   total: number

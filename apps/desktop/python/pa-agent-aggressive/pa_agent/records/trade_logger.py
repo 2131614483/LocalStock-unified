@@ -24,9 +24,12 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from pa_agent.config.paths import RUNTIME_ROOT
+
 logger = logging.getLogger(__name__)
 
-_TRADE_RECORDS_DIR = Path("trade_records")
+# Persist user records outside packaged application resources.
+_TRADE_RECORDS_DIR = RUNTIME_ROOT / "trade_records"
 
 # Maximum bars to show in the chart image
 _CHART_MAX_BARS = 50

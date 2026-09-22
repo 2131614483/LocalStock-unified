@@ -7,11 +7,14 @@ import {
   Sparkles,
   Settings,
   ArrowLeft,
-  CircleDot
+  CircleDot,
+  Landmark,
+  Building2
   , Newspaper
   , Crosshair
 } from 'lucide-react'
 import { useApp } from '../store/app'
+import type { MarketCategory } from '../../shared/types'
 
 /** 侧栏项：div 带 role=button + Enter/Space 触发（U2 键盘可达） */
 function SideItem({
@@ -47,6 +50,8 @@ function SideItem({
 export default function Sidebar() {
   const view = useApp((s) => s.view)
   const setView = useApp((s) => s.setView)
+  const marketCategory = useApp((s) => s.marketList.params.category ?? 'a_share')
+  const loadMarketList = useApp((s) => s.loadMarketList)
   const detailQuote = useApp((s) => {
     const current = s.view
     return current.type === 'detail'
@@ -55,6 +60,10 @@ export default function Sidebar() {
   })
   const detailCode = view.type === 'detail' ? (view.secid.split('.').pop() ?? view.secid) : ''
   const detailName = view.type === 'detail' ? (detailQuote?.name || view.name || detailCode) : ''
+  const openMarket = (category: MarketCategory): void => {
+    setView({ type: 'market' })
+    void loadMarketList({ category, pn: 1 })
+  }
 
   return (
     <div className="sidebar">
@@ -66,10 +75,59 @@ export default function Sidebar() {
         onClick={() => setView({ type: 'watchlist' })}
       />
       <SideItem
-        active={view.type === 'market'}
+        active={view.type === 'market' && marketCategory === 'a_share'}
         icon={<ListOrdered size={14} />}
         label="沪深A股"
-        onClick={() => setView({ type: 'market' })}
+        onClick={() => openMarket('a_share')}
+      />
+      <SideItem
+        active={view.type === 'market' && marketCategory === 'fund'}
+        icon={<Landmark size={14} />}
+        label="基金 / ETF"
+        onClick={() => openMarket('fund')}
+      />
+      <SideItem
+        active={view.type === 'market' && marketCategory === 'index'}
+        icon={<Building2 size={14} />}
+        label="大盘指数"
+        onClick={() => openMarket('index')}
+      />
+      <div className="sidebar-title">股票市场</div>
+      <SideItem
+        active={view.type === 'market' && marketCategory === 'shanghai'}
+        icon={<ListOrdered size={14} />}
+        label="沪市 A 股"
+        onClick={() => openMarket('shanghai')}
+      />
+      <SideItem
+        active={view.type === 'market' && marketCategory === 'shenzhen'}
+        icon={<ListOrdered size={14} />}
+        label="深市 A 股"
+        onClick={() => openMarket('shenzhen')}
+      />
+      <SideItem
+        active={view.type === 'market' && marketCategory === 'chinext'}
+        icon={<ListOrdered size={14} />}
+        label="创业板"
+        onClick={() => openMarket('chinext')}
+      />
+      <SideItem
+        active={view.type === 'market' && marketCategory === 'star'}
+        icon={<ListOrdered size={14} />}
+        label="科创板"
+        onClick={() => openMarket('star')}
+      />
+      <SideItem
+        active={view.type === 'market' && marketCategory === 'beijing'}
+        icon={<ListOrdered size={14} />}
+        label="北交所"
+        onClick={() => openMarket('beijing')}
+      />
+      <SideItem
+        active={view.type === 'market' && marketCategory === 'b_share'}
+        icon={<ListOrdered size={14} />}
+        label="沪深 B 股"
+        onClick={() => openMarket('b_share')}
       />
       <SideItem
         active={view.type === 'backtest'}

@@ -61,12 +61,18 @@ export function getLocalPreClose(secid: string): number {
   const conn = getConn()
   if (!conn) return 0
   try {
-    const row = conn
+    const stock = conn
       .prepare(
         'SELECT pre_close_price FROM stock_daily WHERE stock_code=? ORDER BY trade_date DESC LIMIT 1'
       )
       .get(codeOf(secid)) as { pre_close_price: number } | undefined
-    return row?.pre_close_price ?? 0
+    if (stock?.pre_close_price != null) return stock.pre_close_price
+    const fund = conn
+      .prepare(
+        `SELECT close FROM fund_daily WHERE fund_code=? ORDER BY trade_date DESC LIMIT 1 OFFSET 1`
+      )
+      .get(codeOf(secid)) as { close: number } | undefined
+    return fund?.close ?? 0
   } catch {
     return 0
   }
@@ -142,7 +148,7 @@ export function getLocalIndexKline(secid: string, klt: number): KlineResult | nu
   return buildKline(secid, daily, klt)
 }
 
-/** 从本地行情库读取 K 线（klt: 101 日 / 102 周 / 103 月 / 104 季聚合；分钟级返回 null 走在线源） */
+/** 从本地行情库读取 K 线（股票、基金和指数均可离线使用）。 */
 export function getLocalKline(secid: string, klt: number): KlineResult | null {
   if (MINUTE_KLTS.has(klt)) return null // 本地无分钟数据
   if (isIndexSecid(secid)) return getLocalIndexKline(secid, klt) // 指数走 index_daily（close 线）
@@ -157,6 +163,15 @@ export function getLocalKline(secid: string, klt: number): KlineResult | null {
          FROM stock_daily WHERE stock_code=? ORDER BY trade_date`
       )
       .all(code) as DailyRow[]
+    if (!rows.length) {
+      rows = conn
+        .prepare(
+          `SELECT trade_date, open AS open_price, high AS high_price, low AS low_price,
+                  close AS close_price, volume, amount
+           FROM fund_daily WHERE fund_code=? ORDER BY trade_date`
+        )
+        .all(code) as DailyRow[]
+    }
   } catch {
     return null
   }

@@ -1,5 +1,6 @@
 import { useCallback, useMemo } from 'react'
 import type { Quote } from '../../shared/types'
+import type { MarketCategory } from '../../shared/types'
 import { useApp } from '../store/app'
 import StockTable, { type Column } from '../components/StockTable'
 
@@ -32,11 +33,19 @@ const TOTAL_MV_COLUMN: Column = {
 /** 模块级常量：保持 extraColumns/omitKeys 引用稳定，避免行情推送时 columns/Row memo 失效 */
 const EXTRA_MV: Column[] = [TOTAL_MV_COLUMN]
 
+const CATEGORY_TITLES: Record<MarketCategory, string> = {
+  a_share: '沪深A股', shanghai: '沪市 A 股', shenzhen: '深市 A 股', chinext: '创业板',
+  star: '科创板', beijing: '北交所', b_share: '沪深 B 股', fund: '基金 / ETF', index: '大盘指数'
+}
+
 /** 沪深A股视图（主窗内嵌 / 浮窗共用） */
 export default function MarketView() {
   const marketList = useApp((s) => s.marketList)
   const loadMarketList = useApp((s) => s.loadMarketList)
   const setView = useApp((s) => s.setView)
+  const category = marketList.params.category ?? 'a_share'
+  const title = CATEGORY_TITLES[category]
+  const showsMarketValue = !['fund', 'index'].includes(category)
 
   // 本地模式判定：行无 turnoverRate/industry（本地生成不含这些字段）且总市值有值
   const isLocal = useMemo(
@@ -68,7 +77,7 @@ export default function MarketView() {
     <div className="table-card">
       <div className="table-toolbar">
         <span className="table-title">
-          沪深A股
+          {title}
           <span className="table-total">共 {marketList.total} 只</span>
           {isLocal ? (
             <span className="table-total">（本地行情库 · 收盘数据）</span>
@@ -97,7 +106,7 @@ export default function MarketView() {
         }
         onRowClick={onRowClick}
         omitKeys={isLocal ? LOCAL_MISSING : undefined}
-        extraColumns={EXTRA_MV}
+        extraColumns={showsMarketValue ? EXTRA_MV : undefined}
         resizable
         widthKey="market"
       />

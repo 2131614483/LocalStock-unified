@@ -1,10 +1,12 @@
-import { useRef, useState } from 'react'
-import { History } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { History, Settings2 } from 'lucide-react'
 import CodeMirror from '@uiw/react-codemirror'
 import { python } from '@codemirror/lang-python'
 import { oneDark } from '@codemirror/theme-one-dark'
 import { useBacktest } from '../../store/backtest'
+import { strategyHistoryManager, type StrategyHistoryRecord } from '../../lib/strategy-history'
 import SplitPane from '../SplitPane'
+import StrategyHistoryManager from './StrategyHistoryManager'
 
 const TEMPLATE_LABEL: Record<string, string> = {
   buy_and_hold: '买入持有',
@@ -15,13 +17,6 @@ const TEMPLATE_LABEL: Record<string, string> = {
 
 /** 深色 Python 编辑器扩展：语法高亮（CodeMirror 6，A8） */
 const PY_EXTENSIONS = [python()]
-const STRATEGY_HISTORY_KEY = 'localstock.backtest.code-history'
-interface CodeVersion { code: string; ts: number }
-
-function readCodeHistory(): CodeVersion[] {
-  try { return JSON.parse(localStorage.getItem(STRATEGY_HISTORY_KEY) || '[]') as CodeVersion[] } catch { return [] }
-}
-
 export default function StrategyEditor() {
   const templates = useBacktest((s) => s.templates)
   const selectedTemplate = useBacktest((s) => s.selectedTemplate)
@@ -35,27 +30,52 @@ export default function StrategyEditor() {
   const runBacktest = useBacktest((s) => s.runBacktest)
   const running = useBacktest((s) => s.running)
   const resetToTemplate = useBacktest((s) => s.resetToTemplate)
+  const saveCode = useBacktest((s) => s.saveCode)
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const historyTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const [codeHistory, setCodeHistory] = useState<CodeVersion[]>(readCodeHistory)
-  const [showHistory, setShowHistory] = useState(false)
+  const latestCode = useRef(code)
+  const [historyCount, setHistoryCount] = useState(0)
+  const [showHistoryManager, setShowHistoryManager] = useState(false)
 
-  const rememberCode = (value: string): void => {
-    if (!value.trim()) return
-    const next = [{ code: value, ts: Date.now() }, ...readCodeHistory().filter((item) => item.code !== value)].slice(0, 20)
-    localStorage.setItem(STRATEGY_HISTORY_KEY, JSON.stringify(next))
-    setCodeHistory(next)
+  useEffect(() => {
+    latestCode.current = code
+  }, [code])
+
+  useEffect(() => () => {
+    if (saveTimer.current) clearTimeout(saveTimer.current)
+    if (historyTimer.current) clearTimeout(historyTimer.current)
+    // 离开回测页或关闭窗口时，不丢弃尚未到达防抖时间的最后一次改动。
+    void saveCode(latestCode.current).catch(() => {})
+  }, [saveCode])
+
+  const refreshHistoryCount = async (): Promise<void> => {
+    setHistoryCount((await strategyHistoryManager.list()).length)
+  }
+
+  useEffect(() => { void refreshHistoryCount() }, [])
+
+  const rememberCode = async (value: string): Promise<void> => {
+    await strategyHistoryManager.capture(value)
+    await refreshHistoryCount()
   }
 
   const handleCodeChange = (v: string): void => {
+    latestCode.current = v
     setCode(v)
     if (saveTimer.current) clearTimeout(saveTimer.current)
     // 1 秒防抖自动保存，重启后恢复
     saveTimer.current = setTimeout(() => {
-      void window.api.settings.set('backtest.code', v).catch(() => {})
+      void saveCode(v).catch(() => {})
     }, 1000)
     if (historyTimer.current) clearTimeout(historyTimer.current)
-    historyTimer.current = setTimeout(() => rememberCode(v), 1200)
+    historyTimer.current = setTimeout(() => { void rememberCode(v) }, 1200)
+  }
+
+  const restoreHistory = (record: StrategyHistoryRecord): void => {
+    latestCode.current = record.code
+    setCode(record.code)
+    void saveCode(record.code).catch(() => {})
+    setShowHistoryManager(false)
   }
 
   return (
@@ -78,23 +98,13 @@ export default function StrategyEditor() {
         <div className="editor-head">
           <span className="panel-title">策略代码（Python）</span>
           <div className="editor-head-right">
-            <div className="strategy-history-wrap">
-              <button className="btn" onClick={() => setShowHistory((value) => !value)} title="查看最近代码版本">
-                <History size={12} /> 历史 {codeHistory.length}
-              </button>
-              {showHistory && (
-                <div className="strategy-code-history">
-                  {!codeHistory.length && <div>暂无历史</div>}
-                  {codeHistory.map((item) => (
-                    <button key={item.ts} onClick={() => { rememberCode(code); setCode(item.code); void window.api.settings.set('backtest.code', item.code); setShowHistory(false) }}>
-                      <span>{item.code.split('\n').find((line) => line.trim()) || '代码版本'}</span>
-                      <time>{new Date(item.ts).toLocaleString()}</time>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-            <button className="btn" onClick={() => { rememberCode(code); resetToTemplate() }} title="恢复模板原始代码">
+            <button className="btn" onClick={() => setShowHistoryManager(true)} title="管理策略历史版本">
+              <History size={12} /> 历史 {historyCount}
+            </button>
+            <button className="btn" onClick={() => setShowHistoryManager(true)} title="新建、编辑、恢复或删除历史策略">
+              <Settings2 size={12} /> 管理
+            </button>
+            <button className="btn" onClick={() => { void rememberCode(code); resetToTemplate() }} title="恢复模板原始代码">
               复原
             </button>
             <span className="editor-hint">
@@ -155,6 +165,11 @@ export default function StrategyEditor() {
         </div>
       </div>
       </SplitPane>
+      {showHistoryManager && <StrategyHistoryManager
+        currentCode={code}
+        onRestore={restoreHistory}
+        onClose={() => { setShowHistoryManager(false); void refreshHistoryCount() }}
+      />}
     </div>
   )
 }

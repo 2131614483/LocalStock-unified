@@ -37,6 +37,7 @@ interface AppState {
 
   setView(view: View): void
   setBacktestTarget(target: { secid: string; name: string } | null): void
+  loadBacktestTarget(): Promise<void>
   loadWatchlist(): Promise<void>
   toggleWatchlist(item: WatchItem): Promise<boolean>
   setQuotes(quotes: Quote[]): void
@@ -48,7 +49,8 @@ const DEFAULT_LIST_PARAMS: MarketListParams = {
   pn: 1,
   pz: 100,
   fid: 'f3',
-  order: 'desc'
+  order: 'desc',
+  category: 'a_share'
 }
 
 export const useApp = create<AppState>((set, get) => ({
@@ -62,7 +64,32 @@ export const useApp = create<AppState>((set, get) => ({
 
   setView: (view) => set({ view }),
 
-  setBacktestTarget: (target) => set({ backtestTarget: target }),
+  setBacktestTarget: (target) => {
+    set({ backtestTarget: target })
+    void window.api.settings.set('backtest.target', JSON.stringify(target)).catch(() => {})
+  },
+
+  loadBacktestTarget: async () => {
+    // 从详情页刚带来的选择优先，不能被一个较早的异步读取覆盖。
+    if (get().backtestTarget) return
+    try {
+      const raw = await window.api.settings.get('backtest.target')
+      if (!raw) return
+      const value: unknown = JSON.parse(raw)
+      if (
+        value &&
+        typeof value === 'object' &&
+        'secid' in value &&
+        'name' in value &&
+        typeof value.secid === 'string' &&
+        typeof value.name === 'string'
+      ) {
+        set({ backtestTarget: { secid: value.secid, name: value.name } })
+      }
+    } catch {
+      // 无效的旧设置不影响回测页正常打开。
+    }
+  },
 
   loadWatchlist: async () => {
     try {

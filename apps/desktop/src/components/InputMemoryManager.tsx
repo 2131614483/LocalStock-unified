@@ -6,6 +6,8 @@ interface Entry { value: string; ts: number }
 
 function eligible(target: EventTarget | null): target is MemoryElement {
   if (!(target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target instanceof HTMLSelectElement)) return false
+  // CodeMirror 使用隐藏 textarea 接收键盘输入；把它当普通表单恢复历史文本会破坏编辑器输入状态。
+  if (target.closest('.cm-editor')) return false
   if (target instanceof HTMLInputElement && ['password', 'checkbox', 'radio', 'file', 'button', 'submit', 'hidden'].includes(target.type)) return false
   const readOnly = target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement
     ? target.readOnly
@@ -71,7 +73,11 @@ export default function InputMemoryManager() {
       setPosition({ top: Math.max(4, rect.top - 28), left: Math.max(4, Math.min(window.innerWidth - 154, rect.right - 150)) })
     }
     const focus = (event: FocusEvent): void => {
-      if (!eligible(event.target)) return
+      if (!eligible(event.target)) {
+        // 升级前若已聚焦过 CodeMirror，立即收起遗留的输入记忆浮层。
+        if (event.target instanceof Element && event.target.closest('.cm-editor')) setActive(null)
+        return
+      }
       const el = event.target
       if (!defaults.has(el)) defaults.set(el, el.value)
       const history = readEntries(el)

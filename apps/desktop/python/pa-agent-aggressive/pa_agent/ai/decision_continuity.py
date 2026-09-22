@@ -7,9 +7,12 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from pa_agent.config.paths import RUNTIME_ROOT
 from pa_agent.util.price_tick import infer_price_tick_from_frame
 
-_TRADE_RECORDS_DIR = Path("trade_records")
+# Desktop services run from a bundled resource directory, which may be read-only.
+# Keep generated and imported trade history in the profile runtime instead.
+_TRADE_RECORDS_DIR = RUNTIME_ROOT / "trade_records"
 
 # Default: no opposite-direction plan at the same structure within N closed bars.
 DEFAULT_STRUCTURE_FLIP_COOLDOWN_BARS = 3

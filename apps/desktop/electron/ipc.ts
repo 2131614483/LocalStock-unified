@@ -1,5 +1,5 @@
 import { BrowserWindow, ipcMain } from 'electron'
-import { getMarketList, searchStocks } from './market/eastmoney'
+import { searchStocks } from './market/eastmoney'
 import { getOrderBook } from './market/tencent'
 import { getQuotesSafe } from './market/quotes'
 import { getLocalMarketListAsync } from './market/sqlite-worker-client'
@@ -7,6 +7,7 @@ import { resolveKline } from './market/kline-resolver'
 import { resolveMinute } from './market/minute-resolver'
 import { setDbPath } from './market/db-path'
 import { stockDataPath } from './backtest'
+import type { MarketListParams } from '../shared/types'
 import {
   listWatchlist,
   addWatchlist,
@@ -83,11 +84,10 @@ export function registerIpc(getWindow: () => Electron.BrowserWindow | null): voi
   auditedHandle('market:getQuotes', (_e, secids: string[]) => getQuotesSafe(secids))
   auditedHandle(
     'market:getMarketList',
-    async (_e, params: Parameters<typeof getMarketList>[0]) => {
-      // 优先本地行情库生成列表（worker 线程执行，不阻塞主进程）
+    async (_e, params: MarketListParams) => {
+      // 各市场分类始终只读本地行情库，断开网络时也不会切换为在线列表。
       const local = await getLocalMarketListAsync(params)
-      if (local) return local
-      return getMarketList(params)
+      return local ?? { total: 0, list: [] }
     }
   )
   auditedHandle('market:getKline', (_e, secid: string, klt: number, fqt: number) =>

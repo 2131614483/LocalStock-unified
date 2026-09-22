@@ -46,6 +46,9 @@ export async function resolveKline(
   if (cached && !cached.stale) return cached.value // 新鲜缓存
   // 分钟K线（1/5/15/30/60/120）：新浪主源 + 腾讯备选，成功落库，失败回退 stale 缓存/本地
   if (MINUTE_KLTS.has(klt)) {
+    // 已持久化的分钟 K 线（包括导入的 ETF 数据）优先展示，不为已有本地数据发起网络请求。
+    const localM = readLocalMinuteKline(secid, klt)
+    if (localM && localM.length) return { secid, name: '', points: localM }
     try {
       const r = await getMinuteKline(secid, klt)
       if (r && r.points.length) {
@@ -57,12 +60,6 @@ export async function resolveKline(
       console.error('[minute-kline] 在线拉取失败:', (err as Error).message)
     }
     if (cached) return { ...cached.value, stale: true } // 在线失败 → 过期缓存，显式标记
-    const localM = readLocalMinuteKline(secid, klt)
-    if (localM && localM.length) {
-      const result = { secid, name: '', points: localM, stale: true }
-      writeCache(key, result)
-      return result
-    }
     return null
   }
   // 在线东财（日/周/月/季在线回退）
