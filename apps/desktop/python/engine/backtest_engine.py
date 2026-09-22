@@ -186,49 +186,33 @@ class BacktestEngine:
         return self._trade_days
 
     def load_stock_data(self, stock_code, start_date=None, end_date=None):
-        """加载单只股票或场内基金的本地日线到缓存"""
+        """加载单只股票的行情数据到缓存"""
         code = stock_code.split('.')[0]
         if code in self._price_cache:
             return self._price_cache[code]
 
         sd = start_date or self.start_date
         ed = end_date or self.end_date
+        rows = self.conn.execute(
+            'SELECT trade_date, open_price, close_price, pre_close_price, '
+            'volume, amount, dretwd, adj_close_wd '
+            'FROM stock_daily WHERE stock_code=? AND trade_date>=? AND trade_date<=? '
+            'ORDER BY trade_date', (code, sd, ed)
+        ).fetchall()
+
         data = {}
-        if self._is_fund(code):
-            rows = self.conn.execute(
-                'SELECT trade_date, open, high, low, close, volume, amount '
-                'FROM fund_daily WHERE fund_code=? AND trade_date>=? AND trade_date<=? '
-                'ORDER BY trade_date', (code, sd, ed)
-            ).fetchall()
-            previous_close = None
-            for r in rows:
-                close = float(r['close'] or 0)
-                change = close / previous_close - 1 if previous_close and previous_close > 0 else 0.0
-                data[r['trade_date']] = {
-                    'open': float(r['open'] or close), 'close': close,
-                    'pre_close': previous_close or close, 'volume': r['volume'] or 0,
-                    'amount': r['amount'] or 0, 'dretwd': change, 'adj_close_wd': close,
-                }
-                previous_close = close
-        else:
-            rows = self.conn.execute(
-                'SELECT trade_date, open_price, close_price, pre_close_price, '
-                'volume, amount, dretwd, adj_close_wd '
-                'FROM stock_daily WHERE stock_code=? AND trade_date>=? AND trade_date<=? '
-                'ORDER BY trade_date', (code, sd, ed)
-            ).fetchall()
-            for r in rows:
-                data[r['trade_date']] = {
-                    'open': r['open_price'], 'close': r['close_price'],
-                    'pre_close': r['pre_close_price'], 'volume': r['volume'], 'amount': r['amount'],
-                    'dretwd': r['dretwd'], 'adj_close_wd': r['adj_close_wd'],
-                }
+        for r in rows:
+            data[r['trade_date']] = {
+                'open': r['open_price'],
+                'close': r['close_price'],
+                'pre_close': r['pre_close_price'],
+                'volume': r['volume'],
+                'amount': r['amount'],
+                'dretwd': r['dretwd'],
+                'adj_close_wd': r['adj_close_wd'],
+            }
         self._price_cache[code] = data
         return data
-
-    @staticmethod
-    def _is_fund(code):
-        return code.isdigit() and len(code) == 6 and code.startswith(('15', '16', '50', '51', '52', '56', '58'))
 
     def get_price_on_date(self, stock_code, date):
         """获取某只股票某日的价格"""
@@ -394,7 +378,7 @@ class BacktestEngine:
             sell_price = self.slippage.apply(price, 'sell')
             revenue = sell_price * sell_amount
             commission = max(revenue * self.order_cost.close_commission, self.order_cost.min_commission)
-            tax = 0 if self._is_fund(code) else revenue * self.order_cost.close_tax
+            tax = revenue * self.order_cost.close_tax
 
             self.context.portfolio.available_cash += (revenue - commission - tax)
             profit = (sell_price - current_pos.avg_cost) * sell_amount
