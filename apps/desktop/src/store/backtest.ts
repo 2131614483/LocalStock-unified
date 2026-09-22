@@ -196,10 +196,14 @@ export const useBacktest = create<BacktestState>((set, get) => ({
   },
 
   setParams: (p) => {
+    const requestedCapital = p.capital
     const next = {
       startDate: p.startDate ?? get().startDate,
       endDate: p.endDate ?? get().endDate,
-      capital: p.capital ?? get().capital
+      // 不让空输入转换出的 0、NaN 等非法值写入持久化工作区。
+      capital: typeof requestedCapital === 'number' && Number.isFinite(requestedCapital) && requestedCapital > 0
+        ? requestedCapital
+        : get().capital
     }
     set(next)
     void window.api.settings.set(
@@ -211,6 +215,10 @@ export const useBacktest = create<BacktestState>((set, get) => ({
   runBacktest: async () => {
     if (!get().code.trim()) {
       set({ error: '请先选择策略模板或编写策略代码' })
+      return
+    }
+    if (!Number.isFinite(get().capital) || get().capital <= 0) {
+      set({ error: '初始资金必须是大于 0 的数字' })
       return
     }
     // 即使用户在防抖时间内立刻点击运行，也先保存本次策略。

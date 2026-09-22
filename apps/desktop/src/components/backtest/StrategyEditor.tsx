@@ -1,12 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
-import { History, Settings2 } from 'lucide-react'
+import { History, Plus, Settings2 } from 'lucide-react'
 import CodeMirror from '@uiw/react-codemirror'
 import { python } from '@codemirror/lang-python'
 import { oneDark } from '@codemirror/theme-one-dark'
 import { useBacktest } from '../../store/backtest'
 import { strategyHistoryManager, type StrategyHistoryRecord } from '../../lib/strategy-history'
+import { customStrategyManager, type CustomStrategy } from '../../lib/custom-strategies'
 import SplitPane from '../SplitPane'
 import StrategyHistoryManager from './StrategyHistoryManager'
+import CustomStrategyManager from './CustomStrategyManager'
 
 const TEMPLATE_LABEL: Record<string, string> = {
   buy_and_hold: '买入持有',
@@ -36,10 +38,19 @@ export default function StrategyEditor() {
   const latestCode = useRef(code)
   const [historyCount, setHistoryCount] = useState(0)
   const [showHistoryManager, setShowHistoryManager] = useState(false)
+  const [customStrategies, setCustomStrategies] = useState<CustomStrategy[]>([])
+  const [selectedCustomId, setSelectedCustomId] = useState<string | null>(null)
+  const [showCustomManager, setShowCustomManager] = useState(false)
+  // 数字输入需要允许用户先清空再重新键入，不能每个字符都立即转成 Number。
+  const [capitalInput, setCapitalInput] = useState(String(capital))
 
   useEffect(() => {
     latestCode.current = code
   }, [code])
+
+  useEffect(() => {
+    setCapitalInput(String(capital))
+  }, [capital])
 
   useEffect(() => () => {
     if (saveTimer.current) clearTimeout(saveTimer.current)
@@ -53,6 +64,12 @@ export default function StrategyEditor() {
   }
 
   useEffect(() => { void refreshHistoryCount() }, [])
+
+  const refreshCustomStrategies = async (): Promise<void> => {
+    setCustomStrategies(await customStrategyManager.list())
+  }
+
+  useEffect(() => { void refreshCustomStrategies() }, [])
 
   const rememberCode = async (value: string): Promise<void> => {
     await strategyHistoryManager.capture(value)
@@ -78,6 +95,40 @@ export default function StrategyEditor() {
     setShowHistoryManager(false)
   }
 
+  const useCustomStrategy = (strategy: CustomStrategy): void => {
+    latestCode.current = strategy.code
+    setCode(strategy.code)
+    setSelectedCustomId(strategy.id)
+    void saveCode(strategy.code).catch(() => {})
+    setShowCustomManager(false)
+  }
+
+  const createCustomStrategy = async (): Promise<void> => {
+    const strategy = await customStrategyManager.create('未命名策略', code)
+    setCustomStrategies((items) => [strategy, ...items])
+    setSelectedCustomId(strategy.id)
+    setShowCustomManager(true)
+  }
+
+  /**
+   * 失焦、按回车或运行回测前统一提交资金。空值/非法值不会覆盖上一次有效资金，
+   * 这样用户可以放心全选并直接输入新金额。
+   */
+  const commitCapital = (): boolean => {
+    const nextCapital = Number(capitalInput)
+    if (!capitalInput.trim() || !Number.isFinite(nextCapital) || nextCapital <= 0) {
+      setCapitalInput(String(capital))
+      return false
+    }
+    if (nextCapital !== capital) setParams({ capital: nextCapital })
+    return true
+  }
+
+  const handleRunBacktest = (): void => {
+    if (!commitCapital()) return
+    void runBacktest()
+  }
+
   return (
     <div className="editor-panel">
       <SplitPane direction="vertical" initial={150} min={120} max={280} storageKey="split.templates">
@@ -87,11 +138,29 @@ export default function StrategyEditor() {
           <div
             key={t.name}
             className={`template-item ${selectedTemplate === t.name ? 'active' : ''}`}
-            onClick={() => applyTemplate(t.name, t.code)}
+            onClick={() => { setSelectedCustomId(null); applyTemplate(t.name, t.code) }}
           >
             {TEMPLATE_LABEL[t.name] ?? t.name}
           </div>
         ))}
+        <div className="custom-strategy-section">
+          <div className="custom-strategy-title">
+            <span>自定义策略</span>
+            <button className="icon-btn" onClick={() => void createCustomStrategy()} title="将当前代码新建为自定义策略" aria-label="新建自定义策略"><Plus size={14} /></button>
+          </div>
+          {customStrategies.map((strategy) => (
+            <div
+              key={strategy.id}
+              className={`template-item ${selectedCustomId === strategy.id ? 'active' : ''}`}
+              onClick={() => useCustomStrategy(strategy)}
+              title={strategy.name}
+            >
+              {strategy.name}
+            </div>
+          ))}
+          {!customStrategies.length && <div className="custom-strategy-empty">暂无自定义策略</div>}
+          <button className="custom-strategy-manage" onClick={() => setShowCustomManager(true)}>管理自定义策略</button>
+        </div>
       </div>
 
       <div className="editor-main">
@@ -150,15 +219,23 @@ export default function StrategyEditor() {
             初始资金
             <input
               type="number"
-              step={100000}
-              value={capital}
-              onChange={(e) => setParams({ capital: Number(e.target.value) })}
+              min={1}
+              step={1000}
+              value={capitalInput}
+              onChange={(e) => setCapitalInput(e.target.value)}
+              onBlur={commitCapital}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.currentTarget.blur()
+                }
+              }}
+              title="可直接全选后输入金额；离开输入框时自动保存"
             />
           </label>
           <button
             className="btn primary run-btn"
             disabled={running}
-            onClick={() => void runBacktest()}
+            onClick={handleRunBacktest}
           >
             {running ? '回测中…' : '▶ 运行回测'}
           </button>
@@ -169,6 +246,11 @@ export default function StrategyEditor() {
         currentCode={code}
         onRestore={restoreHistory}
         onClose={() => { setShowHistoryManager(false); void refreshHistoryCount() }}
+      />}
+      {showCustomManager && <CustomStrategyManager
+        currentCode={code}
+        onUse={useCustomStrategy}
+        onClose={() => { setShowCustomManager(false); void refreshCustomStrategies() }}
       />}
     </div>
   )
